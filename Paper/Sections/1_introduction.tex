@@ -1,0 +1,18 @@
+
+\section{Introduction}
+The world of scientific computing and, specifically, High Performance Computing has undergone a deep revolution in the last 20 years.
+The time when it was possible to improve software performance and time to solution just by using newer and faster hardware is long gone due to the halt in frequency increase in processors that happened around year 2000 \todo{see free lunch is over}.
+This required a paradigm shift in how software is designed and implemented, in order to make it able to leverage the increasing parallelism delivered by current processing hardware units.
+However, the time of being able to achieve good parallel performance on very high scale problems by using MPI+X, with X being any means for intra-node parallelization\footnote{as e.g. OpenMP or CUDA}, and careful programming seems to be coming to an end soon too\todo{find some cit supporting this}\cite{heller2017hpx}.
+
+Current supercomputing machines, which are approaching the long awaited exascale, are characterized by millions of cores, distributed not only over nodes but also over several different architectures as many-core CPUs, GPUs and gpGPUs\todo{check this + FPGA?}.
+The number of processing units and their heterogenicity makes it extremely complex to program them using static and manual resource allocation paradigms, as e.g. MPI does.\todo{Check heller2017 for references}
+
+Furthermore, many important application classes are characterized by highly unbalanced execution trees (see Adaptive Mesh Refinement strategies) and in these cases allocating resources and balancing the load statically and upfront at compile time is simply impossible.
+This cripples parallel performance and causes a suboptimal resource usage, where most of the processors sit waiting for the few expensive subdomains to finish the respective computations.
+
+Solving this problem and the ability to effectively and efficiently scale problems up to the current supercomputer capabilities requires the possibility to change resource allocation and requirements dynamically.
+
+The current predominant approach in HPC is to use the Bulk Synchronous Parallel (BSP) computing model\cite{cheatham1996bulk}.
+
+%eof
