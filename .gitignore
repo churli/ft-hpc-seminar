@@ -1,3 +1,9 @@
+## My adds
+# Ignore Out folder
+Out
+# Ignore Template folder
+Template
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
