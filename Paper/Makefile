@@ -12,7 +12,7 @@ AUTOPTS=-interaction nonstopmode
 ITEM=ft-hpc-paper
 # end vars
 
-.PHONY: compile bibcompile oneside-compile oneside-bibcompile
+.PHONY: compile bibcompile oneside-compile oneside-bibcompile compileauto bibcompileauto sharepdf compileautoandshare bibcompileautoandshare
 
 default: bibcompile
 
@@ -38,10 +38,18 @@ bibcompileauto:
 	pdflatex $(AUTOPTS) $(TEXOPTS) $(MANDIR)/$(ITEM).tex
 
 autocompile: init
-	./autocompile.loop.sh $(ITEM).pdf compileauto bibcompileauto
+	./autocompile.loop.sh $(ITEM).pdf compileautoandshare bibcompileautoandshare
 
 clean:
 	echo "Cleaning outfiles..."
 	rm $(OUTDIR)/*
+
+sharepdf:
+	# Copy pdf into Dropbox share for prz to review
+	cp $(OUTDIR)/$(ITEM).pdf ~/Dropbox/FT-HPC/
+
+compileautoandshare: compileauto sharepdf
+
+bibcompileautoandshare: bibcompileauto sharepdf
 
 #EOF
