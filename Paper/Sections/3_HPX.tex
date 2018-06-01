@@ -54,7 +54,11 @@ HPX implements a variety of \emph{performance counters}, which are objects provi
 	\item application,
 	\item HPX runtime and
 	\item OS
-\end{enumerate*}
+\end{enumerate*}.
+Performance counters are first class objects, they are therefore addressable by their GID and are available to both the application and the HPX runtime for performing introspection at runtime on how well the system is performing.
+They are useful tools for performance analysis and for identifying bottlenecks, but they are even more useful as they provide the necessary infrastructure for building resource awareness into an HPX application.
+
+[\TODO is there something more to add?]
 
 \section{Adaptivity in HPX}
 [\TODO Here a brief overview on how is adaptivity achievable within HPX]
