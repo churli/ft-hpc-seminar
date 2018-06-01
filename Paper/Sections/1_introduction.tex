@@ -5,14 +5,30 @@ The time when it was possible to improve software performance and time to soluti
 This required a paradigm shift in how software is designed and implemented, in order to make it able to leverage the increasing parallelism delivered by current processing hardware units.
 However, the time of being able to achieve good parallel performance on very high scale problems by using MPI+X, with X being any means for intra-node parallelization\footnote{as e.g. OpenMP or CUDA}, and careful programming seems to be coming to an end soon too\todo{find some cit supporting this}\cite{heller2017hpx}.
 
-Current supercomputing machines, which are approaching the long awaited exascale, are characterized by millions of cores, distributed not only over nodes but also over several different architectures as many-core CPUs, GPUs and gpGPUs\todo{check this + FPGA?}.
-The number of processing units and their heterogenicity makes it extremely complex to program them using static and manual resource allocation paradigms, as e.g. MPI does.\todo{Check heller2017 for references}
+Current supercomputers, which 	are approaching the long awaited exascale, are characterized by millions of cores, distributed not only over nodes but also over several different architectures as many-core CPUs, GPUs and gpGPUs\todo{check this + FPGA?}.
+The number of processing units and their heterogenicity makes it extremely complex to program them using static and manual resource allocation paradigms, as e.g. MPI does.\todo{Check heller 2017 for references}
 
 Furthermore, many important application classes are characterized by highly unbalanced execution trees (see Adaptive Mesh Refinement strategies) and in these cases allocating resources and balancing the load statically and upfront at compile time is simply impossible.
-This cripples parallel performance and causes a suboptimal resource usage, where most of the processors sit waiting for the few expensive subdomains to finish the respective computations.
+This cripples parallel performance and causes a suboptimal resource usage, where most of the processors sit waiting for the few expensive subdomains to finish their respective computations.
 
-Solving this problem and the ability to effectively and efficiently scale problems up to the current supercomputer capabilities requires the possibility to change resource allocation and requirements dynamically.
+Solving this problem and the ability to effectively and efficiently scale computations up to the current supercomputer capabilities requires the possibility to change resource allocation and requirements dynamically.
 
-The current predominant approach in HPC is to use the Bulk Synchronous Parallel (BSP) computing model\cite{cheatham1996bulk}.
+The current predominant approach in HPC is to use the Bulk Synchronous Parallel (BSP) \todo{Maybe better to talk about CSP (communicating sequential processes)?} computing model\cite{cheatham1996bulk}. This is is based on splitting the computation in \emph{supersteps}: each superstep can be parallelized on several threads which then undergo a global synchronization (a barrier) at the end. Wiring all these supersteps together in the right order then yields the entire computation, which is essentially retaining its high-level sequentiality.
+
+While this model was proposed in an effort to standardize the approach to parallelization in the nineties, it is easy to see its limitations in today's HPC landscape.
+Synchronization barriers delimiting the various parallel regions quickly become bottlenecks when the number of processes increase and in case of any load inbalance, since all threads will have to wait for the slowest one to complete its tasks.
+This can partly be solved by leveraging clever decompositions into processes and by performing synchronization barriers on specific subsets of them. However the complexity of these approaches quickly becomes extremely challanging to manage and, most importantly, they require specific solutions to be carefully crafted within each application, therefore requiring the developer to create ad-hoc solutions which cannot be reused.
+
+In order to solve this problem, the alternative Asynchronous Many Tasks (AMT) approach has been proposed\todo{cit!}. This model is based on splitting the computation in many fine-grained \emph{tasks} and in defining their precise dependencies on each other.
+It is then the job of the runtime system to make sure each dependency is satisfied by using the appropriate synchronization.
+In this way we obtain an execution graph where each task will only wait for the completion of the tasks it depends on before starting. We thus lose the concept of sister threads starting in parallel after a global barrier and, most importantly, we lose the global barriers themselves.
+
+% The gain in time-to-solution obtained by using AMT might not be high or it might even be non-existent, however if we couple AMT with the ability to dynamically allocate and release resources as needed (basically according to the width of the execution graph), we can achieve a much better resource utilization and, ultimately, throughput from a computing centre perspective.
+
+Task-based semantic has been integrated in a variety of runtimes libraries, such as Intel TBB, Charm++, Qthreads and HPX. Also OpenMP has added extensions for task-based parallelism starting from its 3.0 release. \todo{Copy references from grubel}
+In order to achieve true scalability, a runtime supporting task-based parallelism must be able to support it in a massive fashion. This requires the ability to schedule tasks without allocating a new OS thread for each of them, which would simply be infeasible, but it also requires adaptive resource management and task scheduling in order to ensure the required performance.
+
+In this work I will focus on the \emph{High Performance paralleX (HPX)} runtime system, on its design and features and on how it can support resource awareness.
+In section 4 \todo{check this!} I will also present how a simple CFD solver, previously parallelized with MPI, can be ported to HPX and I will compare briefly the performance of the two approaches when run on a shared memory machine.
 
 %eof

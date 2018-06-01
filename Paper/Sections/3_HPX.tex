@@ -1,5 +1,71 @@
 
 \section{HPX}
-foobar
+HPX is a C++ library and runtime system for task-based parallellization. It treats both intra- and inter-node parallelization within an homogeneus interface and it adheres to the C++11/14 standard, which introduced basic support for task-based parallelism.
+
+It features a global address space, the ability to migrate work remotely in the proximity of data, and it supports task dependencies and continuations. It also delivers a powerful performance monitoring system which allows a program to query various performance metrics at runtime and to react accordingly.
+
+\subsection{The ParalleX execution model}\label{subs:parallexModel}
+HPX implements the ParalleX \cite{kaiser2009parallex} execution model, which leverages medium- and fine-grained task parallelism and aims at optimizing both parallel efficiency and programmability of parallel code.
+
+The key highlights of this model are:
+\begin{description}
+	\item [Asynchronous task execution] Functions are meant to be called asynchronously and to yield a proxy for the actual return value. Such a proxy is called \emph{future}. The program will need to synchronize only when the actual return value is needed, e.g. for a later computation. If the task was able to complete between the asynchronous call and the synchronization step, then no waiting time is needed.
+	\item [Lightweight synchronization] Not only we can use futures but we can also make an asynchronous call depend on one or several futures: this enables the runtime system to keep track of the actual dependencies and removes the need for expensive synchronization mechanisms, such as global barriers.
+	\item [Active Global Address Space (AGAS)] ParalleX features a global address space abstraction service. This address space spans all the available hardware entities, called \emph{localities}.
+	What is special about it is that it is not a \emph{partitioned} global address space (PGAS): in PGAS the global address space is statically partitioned across the available localities and moving an object to a different locality requires a change of it address; in AGAS the address space is dynamically and adaptively mapped to the underlying localities, allowing transparent migration of objects across localities while they can still retain their \emph{global identifier (GID)}.
+	\item [Message-driven queue-based scheduling] When a task execution is requested, which may be on any remote locality, an active message, called \emph{parcel}, is sent to the target locality. This triggers the creation of a \emph{PX-Thread}\footnote{From now on PX-Threads will be referred to just as \emph{threads}.}, which will be queued and then scheduled for execution on the OS thread(s) managed by the target locality. This form of message passing is therefore not limited to data and it does not require explicit receive operations to be invoked on the target side. The queuing and scheduling is designed in a way to allow for idling processors or cores to \emph{steal} work from the queues of other ones: this allows for efficient load balancing and prevents starvation\todo{maybe explain starvation}.
+\end{description}
+
+% This clearly differentiates from the usual \emph{Single Program Multiple Data (SPMD)} approach used in MPI and OpenMP, as there is no need to explicitly take care 
+
+\subsection{HPX high-level architecture}
+HPX implements the ParalleX model as a C++ library adhering to C++11/14 standard interfaces for task-based parallelism.
+It aims to address the four main factors that prevent scaling in scaling-impaired applications, which are referred to as \emph{SLOW}:
+\begin{description}
+	\item [Starvation] Not all resources are fully utilized because of a lack of enough concurrent work to execute.
+	\item [Latencies] Intrinsic delays in accessing remote resources.
+	\item [Overheads] The overheads of parallelization, i.e. the work required for management of the parallel computation and any extra work which would not be necessary in a sequential version.
+	\item [Waiting for contention resolution] Any delay caused by oversubscription of shared resources.
+\end{description}
+
+The high-level fundamental components of HPX are:
+
+\paragraph{Threads \& Scheduling}
+When a new thread is created, HPX queues it at an appropriate locality and it then schedules it according to configurable policies. The scheduling is cooperative, i.e. non-preemptive, since preemption and the overhead associated to content switches would not make sense in the context of a single application. Threads are scheduled onto a pool of OS threads, which are usually one per core, whitout requiring any kernel transition and thus removing all the overhead associated to the creation of OS threads.
+
+\paragraph{Parcels}
+Parcels are the HPX implementation of active messages, i.e. messages which can not only deliver data but also trigger execution of methods on remote localities.
+Parcels carry the GID of the remote action, arguments for the action and, if required, a continuation.
+
+\paragraph{Local Control Objects}
+``Local Control Objects (LCOs) control parallelization and synchronization of
+HPX applications. An LCO is any object that may create, activate, or reactivate
+an HPX thread.''\cite{grubel2016dynamic}
+
+The most prominent LCOs delivered by HPX are \emph{futures} and \emph{dataflow} objects: futures are proxies for values which might not have been computed yet and include a synchronization when the actual value is requested, dataflow objects are instead LCOs depending on a set of futures and returning themselves a future for the result of their continuation.
+
+\paragraph{Active Global Address Space}
+As already mentioned in \ref{subs:parallexModel}, one of ParalleX main features is the AGAS: HPX implements an AGAS service which delivers those functionalities.
+
+\paragraph{Performance monitoring system}
+HPX implements a variety of \emph{performance counters}, which are objects providing metrics and statistics on the performance of
+\begin{enumerate*}[label={(\roman*)}]
+	\item hardware,
+	\item application,
+	\item HPX runtime and
+	\item OS
+\end{enumerate*}
+
+\section{Adaptivity in HPX}
+[\TODO Here a brief overview on how is adaptivity achievable within HPX]
+
+\paragraph{Task scheduling}
+todo
+
+\paragraph{AGAS}
+todo
+
+\paragraph{Performance counters}
+todo
 
 %eof

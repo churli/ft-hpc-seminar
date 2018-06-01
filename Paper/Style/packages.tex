@@ -11,3 +11,11 @@
 \usepackage{todonotes}
 % \usepackage[disable]{todonotes}
 %%%
+\let\labelindent\relax % This is in order not to get clashes with IEEEtran
+\usepackage[inline]{enumitem} % Required for the "description" list.
+%%% Fix for not hyperlinking citations
+\makeatletter
+\let\NAT@parse\undefined
+\makeatother
+\usepackage{hyperref}
+%%%
