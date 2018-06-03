@@ -6,7 +6,7 @@
 
 The key point here is that the application itself is aware, at runtime, of what resources are available and in what amount and how much of these resources is currently in use.
 
-This is opposed to the standard approach in which software is optimized to a certain degree for a specific architecture and amount of resources before compilation occurs.
+This is opposed to the standard approach in which software is optimized to a certain degree for specific constraints and amount of resources before compilation occurs.
 Also, in the current standard approach the program is statically assigned a certain amount of resources (e.g. processors) at the beginning of its run and this amount stays assigned to the program also in phases when it does not need them. This causes the resource to be unavailable to other processes while it is, in fact, idle.
 
 Resource awareness can be achieved/pursued \todo{???} at several levels and in different context: in embedded computing to, e.g., properly share the scarce resources with other tasks\todo{CIT}; within a single parallel application to, e.g., balance the load across several compute units or to throttle network usage according to current load; or even at the supercomputing facility level to, e.g., have a smart scheduler which allocates jobs to resources according to their current needs.
