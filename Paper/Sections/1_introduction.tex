@@ -5,7 +5,7 @@
 % This required a paradigm shift in how software is designed and implemented, in order to make it able to leverage the increasing parallelism delivered by current processing hardware units.
 % However, the time of being able to achieve good parallel performance on very high scale problems by using MPI+X, with X being any means for intra-node parallelization\footnote{as e.g. OpenMP or CUDA}, and careful programming seems to be coming to an end soon too\todo{find some cit supporting this}\cite{heller2017hpx}.
 
-Current supercomputers are approaching the long awaited exascale and are characterized by millions of cores, distributed not only over nodes but also over several different architectures as many-core CPUs, GPUs and gpGPUs.
+Current supercomputers are approaching the long awaited exascale and are characterized by millions of cores, distributed not only over nodes but also over several different architectures as many-core CPUs, GPUs, gpGPUs\footnote{General Purpose GPUs.} and FPGAs\footnote{Field Programmable Gate Arrays.}.
 The number of processing units and their heterogenicity makes it extremely complex to program them using static and manual resource allocation paradigms.
 
 Furthermore, many important application classes are characterized by highly unbalanced execution trees (e.g. AMR\footnote{Adaptive Mesh Refinement} strategies): in these cases the resource requirements and the load are inherently unbalanced and difficult to mitigate.
