@@ -25,7 +25,10 @@ Such barriers quickly become bottlenecks when the number of processes increase a
 
 In order to solve this problem, alternative runtime systems based on the Asynchronous Many Tasks (AMT) model are being proposed\cite{heller2017hpx}. This approach is based on splitting the computation in many fine-grained \emph{tasks} and in defining their precise dependencies on each other.
 It is then the job of the runtime system to make sure each dependency is satisfied by using the appropriate synchronization.
-In this way we obtain an execution graph where each task will only wait for the completion of the tasks it depends on before starting. We thus lose the concept of sister threads starting in parallel after a global barrier and, most importantly, we lose the global barriers themselves.
+In this way we obtain an execution graph where each task will only wait for the completion of the tasks it depends on before starting. We thus lose the concept of 
+% sister threads starting in parallel after a global barrier 
+a group of threads executing in parallel between global barriers
+and, most importantly, we lose the global barriers themselves.
 
 % The gain in time-to-solution obtained by using AMT might not be high or it might even be non-existent, however if we couple AMT with the ability to dynamically allocate and release resources as needed (basically according to the width of the execution graph), we can achieve a much better resource utilization and, ultimately, throughput from a computing centre perspective.
 
