@@ -1,17 +1,20 @@
 
-\section{Resource Awareness}
+\section{Resource Awareness} \label{sec:resourceAwareness}
 
-\emph{Resource aware computing (RAC)} comprises a broad spectrum of techniques aimed at achieving runtime adaptivity in resource allocation and usage. The definition of resource is very broad and comprises computational units, memory, bus or network bandwidth, I/O.
-\emph{Resource awareness} is also referred to as \emph{runtime adaptivity} or \emph{elasticity}.
+\emph{Resource aware computing (RAC)}, also referred to as \emph{runtime adaptivity} or \emph{elasticity}, comprises a broad spectrum of techniques aimed at achieving runtime adaptivity in resource allocation and usage. The definition of resource is very broad and comprises computational units, memory, bus or network bandwidth, I/O.
 
-The key point here is that the application itself is aware, at runtime, of what resources are available and in what amount and how much of these resources is currently in use.
+The key point of resource awareness is to make the application and the system aware, at runtime, of what resources are available and in what amount and how much of these resources is currently in use.
 
 This is opposed to the standard approach in which software is optimized to a certain degree for specific constraints and amount of resources before compilation occurs.
 Also, in the current standard approach the program is statically assigned a certain amount of resources (e.g. processors) at the beginning of its run and this amount stays assigned to the program also in phases when it does not need them. This causes the resource to be unavailable to other processes while it is, in fact, idle.
 
-Resource awareness can be achieved/pursued \todo{???} at several levels and in different context: in embedded computing to, e.g., properly share the scarce resources with other tasks\todo{CIT}; within a single parallel application to, e.g., balance the load across several compute units or to throttle network usage according to current load; or even at the supercomputing facility level to, e.g., have a smart scheduler which allocates jobs to resources according to their current needs.
+Resource awareness can be seen at several levels and in different contexts.
 
-[\TODO add some more general approaches for resource awareness, just to give some more context.]
+In embedded computing and in the context of \emph{Multi-Processor System on Chip (MPSoC)} the aim is to ``deal with increasing imperfections such as process variation, fault rates, aging effects, and power as well as thermal problems''\cite{hannig2011resource}. Interesting research efforts are going in the direction of the \emph{Invasive Computing}\cite{teich2011invasive} paradigm: in this model a program can dynamically explore and claim resources in its neighborhood in order to increase its parallelism, in a phase called \emph{invasion}; then, when a lower degree of parallelism is needed, it can autonomously release these resources through an opposite process called \emph{retreat}, making the resources available to other applications.
+
+In the context of a runtime system or a single parallel application we can see resource awareness in introducing the ability to steer the execution in a way to meet resource availability. Task scheduling takes a major role within runtime systems, as we will later see for HPX in section \ref{sec:hpxRAC}. The ability to query the state of the resources at runtime can also lead to resource awareness in applications: it can be used for runtime tuning of execution parameters in order to achieve, e.g. a better time to solution or a higher energy efficiency. One example for this is automatic tuning of task grain size\cite{grubel2016dynamic}.
+
+At the computing facility level, resource awareness can instead be used for more efficient scheduling of jobs, in order to get a better utilization of resources and more predictable power requirements. One interesting example in this direction comes again from invasive computing: here an extension of MPI supporting invasive operations has been developed in order to allow varying resource utilization at runtime\cite{urena2012invasive}. The research effort is currently on developing a process manager capable of leveraging this elasticity for a better machine utilization and, ultimately, an improved throughput.
 
 % \begin{figure}[h]%
 %  	\begin{center}%
