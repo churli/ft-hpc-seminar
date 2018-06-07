@@ -21,7 +21,9 @@ The key highlights of this model are:
 	\item [Lightweight synchronization] Not only we can use futures but we can also make an asynchronous call depend on one or several futures: this enables the runtime system to keep track of the actual dependencies and removes the need for expensive synchronization mechanisms, such as global barriers.
 	\item [Active Global Address Space (AGAS)] ParalleX features a global address space abstraction service. This address space spans all the available hardware entities, called \emph{localities}.
 	The peculiarity of AGAS is that it is not a \emph{partitioned} global address space (PGAS): in PGAS the global address space is statically partitioned across the available localities and moving an object to a different locality requires a change of its address; in AGAS the address space is dynamically and adaptively mapped to the underlying localities, allowing transparent migration of objects across localities while they can still retain their \emph{global identifier (GID)}.
-	\item [Message-driven queue-based scheduling] When a task execution is requested, which may be on any remote locality, an active message, called \emph{parcel}, is sent to the target locality. This triggers the creation of a \emph{PX-Thread}\footnote{From now on PX-Threads will be referred to just as \emph{threads}.}, which will be queued and then scheduled for execution on the OS thread(s) managed by the target locality. This form of message passing is therefore not limited to data and it does not require explicit receive operations to be invoked on the target side. The queuing and scheduling is designed in a way to allow for idling processors or cores to \emph{steal} work from the queues of other ones: this allows for efficient load balancing and prevents starvation\todo{maybe explain starvation}.
+	\item [Message-driven queue-based scheduling] When a task execution is requested, which may be on any remote locality, an active message, called \emph{parcel}, is sent to the target locality. This triggers the creation of a \emph{PX-Thread}\footnote{From now on PX-Threads will be referred to just as \emph{threads}.}, which will be queued and then scheduled for execution on the OS thread(s) managed by the target locality. This form of message passing is therefore not limited to data and it does not require explicit receive operations to be invoked on the target side. The queuing and scheduling is designed in a way to allow for idling processors or cores to \emph{steal} work from the queues of other ones: this allows for efficient load balancing and prevents starvation
+	%\todo{maybe explain starvation}
+	.
 \end{description}
 
 % This clearly differentiates from the usual \emph{Single Program Multiple Data (SPMD)} approach used in MPI and OpenMP, as there is no need to explicitly take care 
@@ -55,16 +57,16 @@ Based on these principles, HPX was designed with a modular architecture composed
  		\caption{Overview of the HPX runtime system components\cite{heller2017hpx}.}\label{fig:hpxArchitecture}
  	\end{center}
 \end{figure}
-~\\ 
+~\\~
 
 \paragraph{The Threading Subsystem}
 When a new thread is created, HPX queues it at an appropriate locality and it then schedules it according to configurable policies. The thread scheduling is cooperative, i.e. non-preemptive, since preemption and the overhead associated to content switches would not make sense in the context of a single application. Threads are scheduled onto a pool of OS threads, which are usually one per core, whitout requiring any kernel transition and thus removing all the overhead associated to the creation of OS threads.
-~\\ 
+~\\~
 
 \paragraph{The Parcel Subsystem}
 Parcels are the HPX implementation of active messages, i.e. messages which can not only deliver data but also trigger execution of methods on remote localities.
 Parcels carry the GID of the destination, a remote action, arguments for the action (data) and, if required, a continuation.
-~\\ 
+~\\~
 
 \paragraph{Local Control Objects}
 ``Local Control Objects (LCOs) control parallelization and synchronization of
@@ -74,11 +76,11 @@ an HPX thread.''\cite{grubel2016dynamic}
 The most prominent LCOs delivered by HPX are \emph{futures} and \emph{dataflow} objects. Futures are proxies for values which might not have been computed yet and include a synchronization when the actual value is requested. Dataflow objects are instead LCOs which depend on a set of futures as input and they return themselves a future for the result of their continuation.
 
 Futures and dataflow LCOs allow to express the true data dependencies within an application and to translate them into the associated execution tree and necessary synchronizations.
-~\\ 
+~\\~
 
 \paragraph{Active Global Address Space}
 As already mentioned in \ref{subs:parallexModel}, one of ParalleX main features is the AGAS: HPX implements an AGAS service which delivers those functionalities.
-~\\ 
+~\\~
 
 \paragraph{The Performance Monitoring Framework}
 HPX implements a performance monitoring framework based on a variety of \emph{performance counters}, which are objects providing metrics and statistics on the performance of
@@ -99,7 +101,7 @@ HPX supports resource awareness by design and, up to a certain degree, automatic
 Its execution model is based on the assumption that threading, synchronization and data distribution must not be exposed to the programmer and must be handled automatically behind the scenes. HPX provides an abstraction for parallelism which does not require the programmer to think about localities, send/receive instructions, threads or barriers, which are referred to by Hartmut Kaiser, the HPX project lead, as the ``GOTOs of parallel computing''\cite{kaiser2014goto}. HPX also encourages the programmer to define fine grained tasks, while the runtime takes care of the actual scheduling and synchronization. This has the positive side effect of making the runtime adaptive, by default, in terms of load balancing.
 
 No comprehensive analysis of resource awareness in HPX has been performed so far, therefore I below report what I believe to be the main features of HPX that can support resource awareness.
-~\\ 
+~\\~
 
 \paragraph{Task scheduling}
 The HPX thread manager and the way it schedules queues for each worker thread are configurable with three main pre-defined policies\cite{heller2017hpx,amatya2014parallel}:
@@ -122,20 +124,20 @@ HPX can include data locality awareness in task scheduling and its task dependen
 
 %% Questo sotto non e' vero! :S
 % Furthermore, as shown by Grubel \cite{grubel2016dynamic}, the HPX task scheduler can be extended to consume performance counters to achieve automatic tuning of task grain size. This kind of feedback loop allows the task scheduler to react to real-time performance metrics such as scheduling overheads and task execution time to dynamically adapt its behaviour to achieve better performance.
-% ~\\ 
+~\\~
 
 \paragraph{AGAS}
 Although AGAS does not a priori imply resource awareness, I believe it is an important feature within HPX in support for adaptivity. It ``is a dynamic and adaptive address space
 which evolves over the lifetime of an application'' and ``is the foundation for dynamic locality control as objects can be moved to other localities without changing their global address''.\cite{kaiser2014hpx}
 This allows implementing mechanisms to relocate objects to different localities in response to performance metrics and resource constraints \cite{amatya2014parallel} and still being able to access them from the rest of the application in a transparent way. The migration decision has to be based on performance metrics and be aware of resources also for what concerns the target locality, in order to ensure a better performance as outcome. This requires a performance monitoring infrastructure allowing access to metrics for remote localities, which in HPX is fullfilled by performance counters.
 The object relocation logic can be therefore completely decoupled from the code accessing the objects and this clearly allows a much cleaner and modular code and it fullfills the underlying design goal of having parallelization and data distribution internalities as much hidden from the programmer as possible.
-~\\ 
+~\\~
 
 \paragraph{Percolation}
 Percolation is a special use of parcels which allows directly targeting hardware resources, instead of logical data data objects, as destination.
 Percolation provides therefore a way to address specialized hardware --- such as gpGPUs and FPGAs --- directly through the parcel layer, enabling to provide work to these accelerators as well as getting back the results in a clean way.
 The percolation mechanism in HPX is aware of the characteristics of specialized hardware resources and can therefore route relevant tasks to these resources in a efficient way \cite{amatya2014parallel}.
-~\\ 
+~\\~
 
 \paragraph{Performance counters}
 Performance counters are a central feature of HPX and play a key role in its resource awareness capabilities.

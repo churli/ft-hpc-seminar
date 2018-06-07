@@ -9,7 +9,7 @@ Current supercomputers are approaching the long awaited exascale and are charact
 The number of processing units and their heterogenicity makes it extremely complex to program them using static and manual resource allocation paradigms.
 
 Furthermore, many important application classes are characterized by highly unbalanced execution trees (e.g. AMR\footnote{Adaptive Mesh Refinement} strategies): in these cases the resource requirements and the load are inherently unbalanced and difficult to mitigate.
-This impacts on parallel performance and causes a suboptimal resource usage, where most of the processors sit waiting for the few expensive subdomains to finish their respective computations.
+This impacts on parallel performance and causes a suboptimal resource usage, where most of the processes sit waiting for the few more expensive ones to finish their respective computations.
 
 Solving this problem and the ability to effectively and efficiently scale computations up to the current supercomputer capabilities requires the possibility to change resource allocation and requirements dynamically.
 
@@ -36,6 +36,8 @@ Task-based semantic has been integrated in a variety of runtimes libraries, such
 In order to achieve true scalability, a runtime supporting task-based parallelism must be able to support it in a massive fashion. This requires the ability to schedule tasks without allocating a new OS thread for each of them, which would be infeasible, but it also requires adaptive resource management and task scheduling in order to ensure the required performance.
 
 In this work I will describe the general concepts of resource awareness (\ref{sec:resourceAwareness}), then I will focus on the \emph{High Performance paralleX (HPX)} runtime system, on its design and features (\ref{sec:hpx}) and on how it can support resource awareness (\ref{sec:hpxRAC}).
-In section \ref{sec:examples} I will also present how a simple CFD solver\todo{check if better a simpler example}, previously parallelized with MPI, can be ported to HPX and I will compare briefly the performance of the two approaches when run on a shared memory machine.
+In section \ref{sec:examples} I will also present 
+% how a simple CFD solver\todo{check if better a simpler example}, previously parallelized with MPI, can be ported to HPX and I will compare briefly the performance of the two approaches when run on a shared memory machine.
+some basic examples of HPX code and I will briefly compare their performance with OpenMP parallelizations on a shared memory machine.
 
 %eof
