@@ -1,4 +1,4 @@
-# Makefile per CV+MotivationLetter
+# Makefile per FT-HPC
 
 # vars
 BASEDIR=`pwd`
