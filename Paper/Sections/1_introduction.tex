@@ -1,4 +1,5 @@
 
+~\\~
 \section{Introduction}
 % The world of scientific computing and, specifically, High Performance Computing has undergone a deep revolution in the last 20 years.
 % The time when it was possible to improve software performance and time to solution just by using newer and faster hardware is long gone due to the halt in frequency increase in processors that happened around year 2000 \todo{see free lunch is over}.
@@ -20,7 +21,8 @@ The current predominant programming model in HPC is to use a \emph{fork-join} mo
 This hybrid model involves many synchronization barriers at the boundaries of parallel regions, which are often global or involve a high number of parallel processes.
 
 % While this model was proposed in an effort to standardize the approach to parallelization in the nineties, it is easy to see its limitations in today's HPC landscape.
-Such barriers quickly become bottlenecks when the number of processes increase and in case of any load inbalance, since all threads will have to wait for the slowest one to complete its tasks. As foreseen by the Exascale Study Group in 2008: ``Somewhere between Petascale and Exascale computing [...] the MPI model may find its limit''.\cite{bergman2008exascale}
+Such barriers quickly become bottlenecks when the number of processes increase and in case of any load inbalance, since all threads will have to wait for the slowest one to complete its tasks (Figure \ref{fig:globalBarriers}).
+As foreseen by the Exascale Study Group in 2008: ``Somewhere between Petascale and Exascale computing [...] the MPI model may find its limit''.\cite{bergman2008exascale}
 % This can partly be solved by leveraging clever decompositions into processes and by performing synchronization barriers on specific subsets of them. However the complexity of these approaches quickly becomes extremely challanging to manage and, most importantly, they require specific solutions to be carefully crafted within each application, therefore requiring the developer to create ad-hoc solutions which cannot be reused.
 
 In order to solve this problem, alternative runtime systems based on the Asynchronous Many Tasks (AMT) model are being proposed\cite{heller2017hpx}. This approach is based on splitting the computation in many fine-grained \emph{tasks} and in defining their precise dependencies on each other.
@@ -39,5 +41,12 @@ In this work I will describe the general concepts of resource awareness (\ref{se
 In section \ref{sec:examples} I will also present 
 % how a simple CFD solver\todo{check if better a simpler example}, previously parallelized with MPI, can be ported to HPX and I will compare briefly the performance of the two approaches when run on a shared memory machine.
 some basic examples of HPX code and I will briefly compare their performance with OpenMP parallelizations on a shared memory machine.
+
+\begin{figure}[t]
+ 	\begin{center}
+ 		\includegraphics[scale=0.09]{Figures/globalBarriersAndThreadIdleTime.png}
+ 		\caption{Global barriers and thread idle time\cite{grubel2016dynamic}.}\label{fig:globalBarriers}
+ 	\end{center}
+\end{figure}
 
 %eof
