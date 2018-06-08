@@ -13,7 +13,8 @@ HPX implements the ParalleX \cite{kaiser2009parallex} execution model, which lev
 \begin{figure}[t]
  	\begin{center}
  		\includegraphics[scale=0.3]{Figures/futureFlowDiagram.png}
- 		\caption{Schematic flow diagram of a future\cite{kaiser2009parallex}.}\label{fig:futureFlowDiagram}
+ 		\caption{Schematic flow diagram of a future\cite{kaiser2009parallex}.\\
+ 		An asynchronous function invocation immediately returns a future, while the function is executed on another thread and potentially on another locality. On the caller thread the execution can proceed further until the .get() method is called on the future: this is when the actual synchronization with the remote operation takes place.}\label{fig:futureFlowDiagram}
  	\end{center}
 \end{figure}
 

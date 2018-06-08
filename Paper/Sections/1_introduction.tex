@@ -45,7 +45,9 @@ some basic examples of HPX code and I will briefly compare their performance wit
 \begin{figure}[t]
  	\begin{center}
  		\includegraphics[scale=0.09]{Figures/globalBarriersAndThreadIdleTime.png}
- 		\caption{Global barriers and thread idle time\cite{grubel2016dynamic}.}\label{fig:globalBarriers}
+ 		\caption{Global barriers and thread idle time\cite{grubel2016dynamic}.\\
+ 		This is a representation of how global barriers cause idling on threads with unbalanced workload.
+ 		We can also see how, during a reduction, just one thread actually operates it while all the others are idle.}\label{fig:globalBarriers}
  	\end{center}
 \end{figure}
 
