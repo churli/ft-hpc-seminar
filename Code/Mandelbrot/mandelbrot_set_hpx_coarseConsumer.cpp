@@ -102,11 +102,11 @@ static int mandelbrot_kernel(void* args)
 	return 0;
 }
 
-void mandelbrot_draw_hpx_coarse(int x_resolution, int y_resolution, int max_iter,
-                                double view_x0, double view_x1, double view_y0, double view_y1,
-                                double x_stepsize, double y_stepsize,
-                                int palette_shift, unsigned char *img,
-                                int num_threads) {
+void mandelbrot_draw_hpx_coarseConsumer(int x_resolution, int y_resolution, int max_iter,
+                                        double view_x0, double view_x1, double view_y0, double view_y1,
+                                        double x_stepsize, double y_stepsize,
+                                        int palette_shift, unsigned char *img,
+                                        int num_threads) {
 	// Create thread-specific data
 	pthread_t* threads = (pthread_t*) calloc(num_threads, sizeof(pthread_t));
 	struct static_data* staticData = (struct static_data*) calloc(1, sizeof(struct static_data));

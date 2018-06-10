@@ -8,7 +8,7 @@ find_package(HPX REQUIRED)
 
 set(flags COMPONENT_DEPENDENCIES iostreams)
 set(sources main.cpp
-        mandelbrot_set.h mandelbrot_set_hpx_coarse.cpp mandelbrot_set_hpx_fine.cpp mandelbrot_set_pthreads.cpp)
+        mandelbrot_set.h mandelbrot_set_hpx_coarseConsumer.cpp mandelbrot_set_hpx_fine.cpp mandelbrot_set_pthreads.cpp)
 source_group("Source Files" FILES ${sources})
 
 add_hpx_executable(mandelbrot

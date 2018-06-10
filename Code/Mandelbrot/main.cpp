@@ -7,12 +7,12 @@
 
 typedef enum RunMode
 {
-    HPX, PTHREADS
+    HPX=0, PTHREADS=1
 } RunMode;
 
 typedef enum TaskGrainSize
 {
-    COARSE, FINE
+    COARSE=1, FINE=0
 } TaskGrainSize;
 
 int main(int argc, char *argv[])
@@ -32,12 +32,15 @@ int main(int argc, char *argv[])
     
     RunMode runMode = HPX;
     TaskGrainSize taskGrainSize = FINE;
+    bool batchMode = false;
+    int numTrials = 1;
+    int taskStride = 1;
     
     double x_stepsize;
     double y_stepsize;
     
     int c;
-    while ((c = getopt(argc, argv, "PCt:p:i:r:v:n:f:")) != -1)
+    while ((c = getopt(argc, argv, "PCBA:S:t:p:i:r:v:n:o:")) != -1)
     {
         switch (c)
         {
@@ -48,7 +51,26 @@ int main(int argc, char *argv[])
             case 'C':
                 taskGrainSize = COARSE;
                 break;
-            
+    
+            case 'B':
+                batchMode = true;
+                break;
+    
+            case 'A':
+                batchMode = true;
+                if (sscanf(optarg, "%d", &numTrials) != 1)
+                {
+                    goto error;
+                }
+                break;
+    
+            case 'S':
+                if (sscanf(optarg, "%d", &taskStride) != 1)
+                {
+                    goto error;
+                }
+                break;
+                
             case 't':
                 if (sscanf(optarg, "%d", &num_threads) != 1)
                 {
@@ -90,21 +112,25 @@ int main(int argc, char *argv[])
                     goto error;
                 }
                 break;
-            case 'f':
+            case 'o':
                 strncpy(file_name, optarg, sizeof(file_name));
                 break;
             
             case '?':
             error:
-                printf(
+                fprintf(stderr,
                         "Usage:\n"
                         "-P \t use legacy pthread-based version\n"
+                        "-C \t use coarse-grained tasks in HPX\n"
+                        "-B \t batch output mode\n"
+                        "-A \t num of trials to average\n"
+                        "-S \t task stride for HPX-fine mode\n"
                         "-t \t number of threads used in computation\n"
                         "-i \t maximum number of iterations per pixel\n"
                         "-r \t image resolution to be computed\n"
                         "-v \t view frame that should be computed\n"
                         "-p \t shift palette to change colors\n"
-                        "-f \t output file name\n"
+                        "-o \t output file name\n"
                         "-n \t no output(default: 0)\n"
                         "\n"
                         "Example:\n"
@@ -120,8 +146,10 @@ int main(int argc, char *argv[])
     
     if (runMode == HPX)
         num_threads = static_cast<int>(hpx::get_num_worker_threads());
+    if (batchMode)
+        stderr = fopen("/dev/null","w");
     
-    printf("Following settings are used for computation:\n"
+    fprintf(stderr, "Following settings are used for computation:\n"
            "Threads: %d\n"
            "Max. iterations: %d\n"
            "Resolution: %dx%d\n"
@@ -132,11 +160,11 @@ int main(int argc, char *argv[])
     
     if (!no_output)
     {
-        printf("Output file: %s\n", file_name);
+        fprintf(stderr, "Output file: %s\n", file_name);
     }
     else
     {
-        printf("No output will be writen\n");
+        fprintf(stderr, "No output will be writen\n");
     }
     
     FILE *file = NULL;
@@ -160,19 +188,25 @@ int main(int argc, char *argv[])
     
     // compute mandelbrot
     clock_gettime(CLOCK_MONOTONIC, &begin);
-    if (runMode == HPX)
+    for (int trial=0; trial<numTrials; ++trial)
     {
-        if (taskGrainSize == FINE)
-            mandelbrot_draw_hpx_fine(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1, x_stepsize,
-                                       y_stepsize, palette_shift, (unsigned char *) image, num_threads);
+        if (runMode == HPX)
+        {
+            if (taskGrainSize == FINE)
+                mandelbrot_draw_hpx_fine(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1,
+                                         x_stepsize, y_stepsize, palette_shift, (unsigned char *) image, num_threads, taskStride);
+            else
+                mandelbrot_draw_hpx_coarseConsumer(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0,
+                                                   view_y1,
+                                                   x_stepsize,
+                                                   y_stepsize, palette_shift, (unsigned char *) image, num_threads);
+        }
         else
-            mandelbrot_draw_hpx_coarse(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1, x_stepsize,
-                                   y_stepsize, palette_shift, (unsigned char *) image, num_threads);
-    }
-    else
-    {
-        mandelbrot_draw_pthreads(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1, x_stepsize,
-                                 y_stepsize, palette_shift, (unsigned char *) image, num_threads);
+        {
+            mandelbrot_draw_pthreads(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1,
+                                     x_stepsize,
+                                     y_stepsize, palette_shift, (unsigned char *) image, num_threads);
+        }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     
@@ -193,8 +227,22 @@ int main(int argc, char *argv[])
         fclose(file);
     }
     
-    printf("\n\nTime: %.5f seconds\n", ((double) end.tv_sec + 1.0e-9 * end.tv_nsec) -
-                                       ((double) begin.tv_sec + 1.0e-9 * begin.tv_nsec));
+    fprintf(stderr, "\n\n");
+    double execTimeGlobalSec = ((double) end.tv_sec + 1.0e-9 * end.tv_nsec) -
+                         ((double) begin.tv_sec + 1.0e-9 * begin.tv_nsec);
+    double execTimeAvgSec = execTimeGlobalSec/numTrials;
+    if (batchMode)
+        printf("pthreads,%d,hpxCoarse,%d,taskStride,%d,xresolution,%d,yresolution,%d,threads,%d,timeGlobal[s],%.5f,timeAvg[s],%.5f\n",
+               runMode,
+               taskGrainSize,
+               taskStride,
+               x_resolution,
+               y_resolution,
+               num_threads,
+               execTimeGlobalSec,
+               execTimeAvgSec);
+    else
+        printf("Time: %.5f seconds\n", execTimeGlobalSec);
     
     free(image);
     return 0;

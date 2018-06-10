@@ -1,17 +1,15 @@
 #ifndef MANDELBROT_MANDELBROT_SET_H
 #define MANDELBROT_MANDELBROT_SET_H
 
-void mandelbrot_draw_hpx_coarse(int x_resolution, int y_resolution, int max_iter,
-                                double view_x0, double view_x1, double view_y0, double view_y1,
-                                double x_stepsize, double y_stepsize,
-                                int palette_shift, unsigned char *img,
-                                int num_threads);
+void mandelbrot_draw_hpx_coarseConsumer(int x_resolution, int y_resolution, int max_iter,
+                                        double view_x0, double view_x1, double view_y0, double view_y1,
+                                        double x_stepsize, double y_stepsize,
+                                        int palette_shift, unsigned char *img,
+                                        int num_threads);
 
-void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter,
-                                double view_x0, double view_x1, double view_y0, double view_y1,
-                                double x_stepsize, double y_stepsize,
-                                int palette_shift, unsigned char *img,
-                                int num_threads);
+void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter, double view_x0, double view_x1,
+                              double view_y0, double view_y1, double x_stepsize, double y_stepsize, int palette_shift,
+                              unsigned char *img, int num_threads, int taskStride);
 
 void mandelbrot_draw_pthreads(int x_resolution, int y_resolution, int max_iter,
                      double view_x0, double view_x1, double view_y0, double view_y1,
