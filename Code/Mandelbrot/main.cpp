@@ -232,13 +232,14 @@ int main(int argc, char *argv[])
                          ((double) begin.tv_sec + 1.0e-9 * begin.tv_nsec);
     double execTimeAvgSec = execTimeGlobalSec/numTrials;
     if (batchMode)
-        printf("pthreads,%d,hpxCoarse,%d,taskStride,%d,xresolution,%d,yresolution,%d,threads,%d,timeGlobal[s],%.5f,timeAvg[s],%.5f\n",
+        printf("pthreads,%d,hpxCoarse,%d,xresolution,%d,yresolution,%d,threads,%d,taskStride,%d,averagingTrials,%d,timeGlobal[s],%.5f,timeAvg[s],%.5f\n",
                runMode,
                taskGrainSize,
-               taskStride,
                x_resolution,
                y_resolution,
                num_threads,
+               taskStride,
+               numTrials,
                execTimeGlobalSec,
                execTimeAvgSec);
     else
