@@ -25,13 +25,13 @@ struct static_data
 	unsigned char* img;
 };
 
-static int getNextTask(int *counter, int stride)
-{
-	int nextTask;
-	nextTask = *counter;
-	*counter += stride;
-	return nextTask;
-}
+//static int getNextTask(int *counter, int stride)
+//{
+//	int nextTask;
+//	nextTask = *counter;
+//	*counter += stride;
+//	return nextTask;
+//}
 
 static void mandelbrot_kernel(int taskNo, struct static_data* sd)
 {
@@ -99,15 +99,14 @@ void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter,
     // Initialize tasks
     int maxTasks = y_resolution;
     int taskStride = 1;
-    hpx::future<void> futures[maxTasks];
-    int currentTask = getNextTask(&taskCounter, taskStride);
+    std::vector<hpx::future<void>> futures;
+//    int currentTask = getNextTask(&taskCounter, taskStride);
+    int currentTask = taskCounter;
     while (currentTask < maxTasks)
     {
-        futures[currentTask] = hpx::async(&mandelbrot_kernel, currentTask, &staticData);
-        currentTask = getNextTask(&taskCounter, taskStride);
+        futures.push_back(hpx::async(&mandelbrot_kernel, currentTask, &staticData));
+//        currentTask = getNextTask(&taskCounter, taskStride);
+        ++currentTask;
     }
-    for (int i = 0; i < maxTasks; ++i)
-    {
-        futures[i].get();
-    }
+    hpx::wait_all(futures);
 }
