@@ -111,4 +111,9 @@ void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter, 
     }
     futures.push_back(hpx::async(&mandelbrot_kernel, currentTask, maxTasks-currentTask, &staticData)); // finish the remaining tasks
     hpx::wait_all(futures);
+//    MINI version below:
+//    std::vector<hpx::future<void>> futures;
+//    while (taskCounter++ < maxTasks)
+//        futures.push_back(hpx::async(&mandelbrot_kernel, taskCounter, 1, &staticData));
+//    hpx::wait_all(futures);
 }

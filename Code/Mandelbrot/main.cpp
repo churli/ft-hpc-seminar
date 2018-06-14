@@ -203,6 +203,7 @@ int main(int argc, char *argv[])
         }
         else
         {
+            fprintf(stderr, "Pthreads!\n");
             mandelbrot_draw_pthreads(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1,
                                      x_stepsize,
                                      y_stepsize, palette_shift, (unsigned char *) image, num_threads);
