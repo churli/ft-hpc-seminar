@@ -10,7 +10,7 @@
 
 The key point of resource awareness is to make the application and the system aware, at runtime, of what resources are available and in what amount and how much of these resources is currently in use.
 
-This is opposed to the standard approach in which software is optimized to a certain degree for specific constraints and amount of resources before compilation occurs.
+This is opposed to the standard approach in which software is optimized to a certain degree for specific constraints and amount of resources before execution, either at compile time or through passing tuned parameters.
 Also, in the current standard approach the program is statically assigned a certain amount of resources (e.g. processors) at the beginning of its run and this amount stays assigned to the program also in phases when it does not need them. This causes the resource to be unavailable to other processes while it is, in fact, idle.
 
 Resource awareness can be seen at several levels and in different contexts.
@@ -19,7 +19,7 @@ In embedded computing and in the context of \emph{Multi-Processor System on Chip
 
 In the context of a runtime system or a single parallel application we can see resource awareness as the ability to steer the execution in a way to dynamically fit current resource availability. In this regard, task scheduling takes a major role within runtime systems, as we will later see for HPX in section \ref{sec:hpxRAC}. The ability to query the state of the resources at runtime can also lead to resource awareness in applications: it can be used for runtime tuning of execution parameters in order to achieve, e.g. a better time to solution or a higher energy efficiency. One example for this is automatic tuning of task grain size\cite{grubel2016dynamic}.
 
-At the supercomputing facility level, resource awareness can instead be used for more efficient scheduling of jobs, in order to get a better utilization of resources and more predictable power requirements. One interesting example in this direction comes again from invasive computing: here an extension of MPI supporting invasive operations has been developed in order to allow varying resource utilization at runtime\cite{urena2012invasive}. The research effort is currently on developing a process manager capable of leveraging this elasticity for a better machine utilization and, ultimately, an improved throughput.
+At the supercomputing facility level, resource awareness can instead be used for more efficient scheduling of jobs, in order to get a better utilization of resources and more predictable power requirements. One interesting example in this direction comes again from invasive computing: here an extension of MPI supporting invasive operations has been developed in order to allow varying resource utilization at runtime\cite{urena2012invasive}. The research effort is currently into developing a process manager capable of leveraging this elasticity for a better machine utilization and, ultimately, an improved throughput.
 
 % \begin{figure}[h]%
 %  	\begin{center}%

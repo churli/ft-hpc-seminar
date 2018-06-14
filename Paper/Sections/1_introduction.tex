@@ -1,6 +1,7 @@
 
 ~\\~
 \section{Introduction}
+\enlargethispage{-1\baselineskip} % Ensure no RIGHINO/VEDOVA on newpage!
 % The world of scientific computing and, specifically, High Performance Computing has undergone a deep revolution in the last 20 years.
 % The time when it was possible to improve software performance and time to solution just by using newer and faster hardware is long gone due to the halt in frequency increase in processors that happened around year 2000 \todo{see free lunch is over}.
 % This required a paradigm shift in how software is designed and implemented, in order to make it able to leverage the increasing parallelism delivered by current processing hardware units.
@@ -37,17 +38,18 @@ and, most importantly, we lose the global barriers themselves.
 Task-based semantic has been integrated in a variety of runtimes libraries, such as Intel TBB\cite{contreras2008characterizing}, Charm++\cite{charmpp}, Qthreads\cite{qthreads} and HPX\cite{heller2017hpx}. Also OpenMP has added extensions for task-based parallelism starting from its 3.0 release\cite{omp30}.
 In order to achieve true scalability, a runtime supporting task-based parallelism must be able to support it in a massive fashion. This requires the ability to schedule tasks without allocating a new OS thread for each of them, which would be infeasible, but it also requires adaptive resource management and task scheduling in order to ensure the required performance.
 
-In this work I will describe the general concepts of resource awareness (\ref{sec:resourceAwareness}), then I will focus on the \emph{High Performance paralleX (HPX)} runtime system, on its design and features (\ref{sec:hpx}) and on how it can support resource awareness (\ref{sec:hpxRAC}).
-In section \ref{sec:examples} I will also present 
+In this work I review the general concepts of resource awareness (\ref{sec:resourceAwareness}), then I review the \emph{High Performance paralleX (HPX)} runtime system, its design and its features (\ref{sec:hpx}). Then I discuss how HPX can support resource awareness and its limitations in this (\ref{sec:hpxRAC}).
+In section \ref{sec:examples} I also present 
 % how a simple CFD solver\todo{check if better a simpler example}, previously parallelized with MPI, can be ported to HPX and I will compare briefly the performance of the two approaches when run on a shared memory machine.
-some basic examples of HPX code and I will briefly compare their performance with OpenMP parallelizations on a shared memory machine.
+a basic example of HPX code and I briefly compare its performance against PThreads and OpenMP parallelizations on a shared memory machine.
 
 \begin{figure}[t]
  	\begin{center}
  		\includegraphics[scale=0.09]{Figures/globalBarriersAndThreadIdleTime.png}
- 		\caption{Global barriers and thread idle time\cite{grubel2016dynamic}.\\
+ 		\caption{Global barriers and thread idle time\protect\cite{grubel2016dynamic}.
  		This is a representation of how global barriers cause idling on threads with unbalanced workload.
- 		We can also see how, during a reduction, just one thread actually operates it while all the others are idle.}\label{fig:globalBarriers}
+ 		We can also see how, during a reduction, just one thread actually operates it while all the others are idle.}
+ 		\label{fig:globalBarriers}
  	\end{center}
 \end{figure}
 

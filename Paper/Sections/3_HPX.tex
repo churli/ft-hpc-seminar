@@ -1,22 +1,16 @@
 
 ~\\~
 \section{HPX} \label{sec:hpx}
+\enlargethispage{2.5\baselineskip} % Ensure no RIGHINO on newpage!
 HPX is a C++ library and runtime system for task-based parallellization. It treats both intra- and inter-node parallelization within an homogeneus interface and it adheres to the C++11/14 standard, which introduced basic support for task-based parallelism.
 
 It features a global address space, the ability to migrate work remotely in the proximity of data, and it supports task dependencies and continuations.
 Its task scheduler is designed to introduce minimal overhead and supports very fine-grained tasks down to \textasciitilde$1\mu s$\cite{grubel2016using} and work-stealing for automatic load balancing.
 It also delivers a powerful performance monitoring system which allows a program to query various performance metrics at runtime and to react accordingly.
+~\\~
 
 \subsection{The ParalleX execution model}\label{subs:parallexModel}
 HPX implements the ParalleX \cite{kaiser2009parallex} execution model, which leverages medium- and fine-grained task parallelism and aims at optimizing both parallel efficiency and programmability of parallel code.
-
-\begin{figure}[t]
- 	\begin{center}
- 		\includegraphics[scale=0.3]{Figures/futureFlowDiagram.png}
- 		\caption{Schematic flow diagram of a future\cite{kaiser2009parallex}.\\
- 		An asynchronous function invocation immediately returns a future, while the function is executed on another thread and potentially on another locality. On the caller thread the execution can proceed further until the .get() method is called on the future: this is when the actual synchronization with the remote operation takes place.}\label{fig:futureFlowDiagram}
- 	\end{center}
-\end{figure}
 
 The key highlights of this model are:
 \begin{description}
@@ -28,8 +22,15 @@ The key highlights of this model are:
 	%\todo{maybe explain starvation}
 	.
 \end{description}
-
-% This clearly differentiates from the usual \emph{Single Program Multiple Data (SPMD)} approach used in MPI and OpenMP, as there is no need to explicitly take care 
+\begin{figure}[t]
+ 	\begin{center}
+ 		\includegraphics[scale=0.3]{Figures/futureFlowDiagram.png}
+ 		\caption{Schematic flow diagram of a future\protect\cite{kaiser2009parallex}.
+ 		An asynchronous function invocation immediately returns a future, while the function is executed on another thread and potentially on another locality. On the caller thread the execution can proceed further until the .get() method is called on the future: this is when the actual synchronization with the remote operation takes place.}
+ 		\label{fig:futureFlowDiagram}
+ 	\end{center}
+\end{figure}
+~\\~
 
 \subsection{HPX high-level architecture}
 HPX is a runtime system implementing the ParalleX model as a C++ library and this is done by strictly adhering to C++11/14 standard interfaces for task-based parallelism.
@@ -79,6 +80,7 @@ As already mentioned in \ref{subs:parallexModel}, one of ParalleX main features 
 ~\\~
 
 \paragraph{The Performance Monitoring Framework}
+\enlargethispage{-1\baselineskip} % Ensure no RIGHINO/VEDOVA on newpage!
 HPX implements a performance monitoring framework based on a variety of \emph{performance counters}, which are objects providing metrics and statistics on the performance of
 \begin{enumerate*}[label={(\roman*)}]
 	\item hardware,
@@ -94,7 +96,8 @@ They are useful tools for performance analysis and for identifying bottlenecks, 
 \begin{figure}[t]
  	\begin{center}
  		\includegraphics[scale=0.18]{Figures/hpxArchitecture.png}
- 		\caption{Overview of the HPX runtime system components\cite{heller2017hpx}.}\label{fig:hpxArchitecture}
+ 		\caption{Overview of the HPX runtime system components\protect\cite{heller2017hpx}.}
+ 		\label{fig:hpxArchitecture}
  	\end{center}
 \end{figure}
 
@@ -103,9 +106,20 @@ They are useful tools for performance analysis and for identifying bottlenecks, 
 HPX supports resource awareness by design and, up to a certain degree, automatically.
 Its execution model is based on the assumption that threading, synchronization and data distribution must not be exposed to the programmer and must be handled automatically behind the scenes. HPX provides an abstraction for parallelism which does not require the programmer to think about localities, send/receive instructions, threads or barriers, which are referred to by Hartmut Kaiser, the HPX project lead, as the ``GOTOs of parallel computing''\cite{kaiser2014goto}. HPX also encourages the programmer to define fine grained tasks, while the runtime takes care of the actual scheduling and synchronization. This has the positive side effect of making the runtime adaptive, by default, in terms of load balancing.
 
-No comprehensive analysis of resource awareness in HPX has been performed so far, therefore I below report what I believe to be the main features of HPX that can support resource awareness.
+% HPX manages and exposes, through abstraction, both software entities and hardware entities types of resources and this abstraction can blur the boundary between these two categories.
+% For example, worker threads and their respective queues obviously belong to the software entities category, however usually there is a one to one mapping between worker threads and the underlying cores or hardware threads of the machine. Although not exposed to the application, the HPX runtime system is aware of the different NUMA domains where the worker threads are allocated and this is taken into account by the task scheduler.
+
+% In general we can define a resource in HPX as any entity which can be monitored through a performance counter. This includes services offered by the runtime system itself, as the parcel or the threading subsystems, but also OS resources consumed by HPX in all localities, such as memory, IO or network.
+HPX manages hardware resources and exposes them through an abstraction process according to its execution model. With the exception of percolation, which is described later in this section, in HPX we can consider as resources all these abstractions provided by the runtime system.
+For example worker threads, localities and the parcel subsistem are respectively abstractions of processing units, compute nodes and the network infrastructure. Task queues are instead a software entity type of resource which does not correspond to any hardware resource but represents the load associated with a processing unit.
+
+It is also important to consider that the performance monitoring framework --- i.e. the infrastructure allowing an application to retrieve performance statistics about the underlying resources and which enables adaptivity on the application side --- can be extended by new, user-defined, performance counters, thus potentially broadening the set of resources the application can be aware of.
+
+No comprehensive analysis of resource awareness in HPX has been published so far.
+Therefore I below summarize the capabilities of HPX --- as reported in scientific literature --- in support for resource awareness together with the factors which currently limit the scope of its adaptivity.
 ~\\~
 
+\subsection{Capabilities}
 \paragraph{Task scheduling}
 The HPX thread manager and the way it schedules queues for each worker thread are configurable with three main pre-defined policies\cite{heller2017hpx,amatya2014parallel}:
 \begin{description}
@@ -124,20 +138,17 @@ Work stealing therefore operates an automatic load balancing action at runtime a
 An important factor that has to be taken into account for effective task scheduling is data --- both temporal and spatial --- locality. Performing task scheduling blind to data locality can lead to substantial performance degradation \cite{connelly1994workload}, while locality aware scheduling can effectively reduce the number of data load and transfer operations and their associated overhead.
 
 HPX can include data locality awareness in task scheduling and its task dependency semantics allows hierarchical grouping of tasks, therefore naturally exposing different levels of data locality \cite{amatya2014parallel}.
-
-%% Questo sotto non e' vero! :S
-% Furthermore, as shown by Grubel \cite{grubel2016dynamic}, the HPX task scheduler can be extended to consume performance counters to achieve automatic tuning of task grain size. This kind of feedback loop allows the task scheduler to react to real-time performance metrics such as scheduling overheads and task execution time to dynamically adapt its behaviour to achieve better performance.
 ~\\~
 
 \paragraph{AGAS}
-Although AGAS does not a priori imply resource awareness, I believe it is an important feature within HPX in support for adaptivity. It ``is a dynamic and adaptive address space
+Although AGAS does not a priori imply resource awareness, it is an important feature within HPX in support for adaptivity. It ``is a dynamic and adaptive address space
 which evolves over the lifetime of an application'' and ``is the foundation for dynamic locality control as objects can be moved to other localities without changing their global address''.\cite{kaiser2014hpx}
 This allows implementing mechanisms to relocate objects to different localities in response to performance metrics and resource constraints \cite{amatya2014parallel} and still being able to access them from the rest of the application in a transparent way. The migration decision has to be based on performance metrics and be aware of resources also for what concerns the target locality, in order to ensure a better performance as outcome. This requires a performance monitoring infrastructure allowing access to metrics for remote localities, which in HPX is fullfilled by performance counters.
 The object relocation logic can be therefore completely decoupled from the code accessing the objects and this clearly allows a much cleaner and modular code and it fullfills the underlying design goal of having parallelization and data distribution internalities as much hidden from the programmer as possible.
 ~\\~
 
 \paragraph{Percolation}
-Percolation is a special use of parcels which allows directly targeting hardware resources, instead of logical data data objects, as destination.
+Percolation is a special use of parcels which allows directly targeting hardware resources, instead of logical data objects, as destination.
 Percolation provides therefore a way to address specialized hardware --- such as gpGPUs and FPGAs --- directly through the parcel layer, enabling to provide work to these accelerators as well as getting back the results in a clean way.
 The percolation mechanism in HPX is aware of the characteristics of specialized hardware resources and can therefore route relevant tasks to these resources in a efficient way \cite{amatya2014parallel}.
 ~\\~
@@ -158,5 +169,27 @@ An example of how an application could consume performance counters to enhance i
 Furthermore, as shown in a proof of concept by Grubel \cite{grubel2016dynamic}, the HPX performance monitoring framework can be used, together with an additional library and additional changes in the application code, to achieve automatic tuning of task grain size. This kind of feedback loop allows the application to react to real-time performance metrics such as task scheduling overheads to dynamically adapt its behaviour to achieve better performance.
 
 Another interesting work which involves adaptivity mediated by performance counters is about \emph{smart executors} in HPX. Khatami et al \cite{khatami2017hpx} showed how loop parallelization efficiency can be tuned, at runtime, using machine learning on a combination of static information gathered at compile time and dynamic information captured at runtime. Their tests on HPX parallel algorithms\footnote{HPX implements parallel algorithms as defined in C++ Standard.} showed a speedup improvement of $12\%$~\textasciitilde~$35\%$ for the Matrix Multiplication, Stream and 2D Stencil benchmarks with respect to the standard HPX implementation.
+~\\~
 
+\subsection{Limitations} \label{subsec:limitations}
+\paragraph{(An)elasticity of HPX}
+Although we have seen that an application can be elastic within HPX, HPX itself does not currently support any variation of the number of worker threads or localities at runtime. As already mentioned in section \ref{sec:resourceAwareness}, this capability, coupled to a process manager capable of leveraging it, can improve resource usage and throughput of a supercomputer.
+
+Projects as Elastic MPI --- an MPI extension implementing invasive computing semantics\cite{urena2017resource} --- and Adaptive MPI --- which implements MPI ranks as Charm++ user level threads\cite{gupta2014towards,prabhakaran2015batch} --- are examples of already ongoing research in this direction.
+~\\~
+
+\paragraph{Power management}
+Although HPX can lead to a more efficient power consumption due to its load balancing capabilities, it does not explicitly support any power management facility.
+
+The current trend in supercomputing is to pay more and more attention to energy efficiency, as current top tier supercomputers already have energy requirements in the order of 10MW. Research efforts are currently going into the development of more energy efficient hardware, as well as integrating energy management capabilities into the software\cite{surve2013energy}.
+
+Energy awareness requires the ability to read metrics as temperature, clock frequency and power consumption from the underlying hardware and to react with strategies as Dynamic Voltage and Frequency Scaling (DVFS).
+~\\~
+
+\paragraph{Fault tolerance}
+Increasing the parallelism of a system implies an increase in the number of hardware devices involved in a computation. This increases the chances of incurring in a component failure. Current and future HPC systems must therefore include means to recover the intermediate state of a computation prior to the failure and to resume the task from that point.
+
+HPX does not currently support any facility for checkpointing or for recovery from partial data losses.
+
+% [\TODO Add something on LIMITATIONS here!]
 %eof
