@@ -3,6 +3,10 @@
 Out
 # Ignore Template folder
 Template
+# Ignore Build folders
+cmake-build-*
+Build
+hpx-build*
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
