@@ -2,7 +2,7 @@
 ~\\~
 \section{HPX} \label{sec:hpx}
 \enlargethispage{2.5\baselineskip} % Ensure no RIGHINO on newpage!
-HPX is a C++ library and runtime system for task-based parallellization. It treats both intra- and inter-node parallelization within an homogeneus interface and it adheres to the C++11/14 standard, which introduced basic support for task-based parallelism.
+HPX is a C++ library and runtime system for task-based parallelization. It treats both intra- and inter-node parallelization within an homogeneous interface and it adheres to the C++11/14 standard, which introduced basic support for task-based parallelism.
 
 It features a global address space, the ability to migrate work remotely in the proximity of data, and it supports task dependencies and continuations.
 Its task scheduler is designed to introduce minimal overhead and supports very fine-grained tasks down to \textasciitilde$1\mu s$\cite{grubel2016using} and work-stealing for automatic load balancing.
@@ -24,7 +24,7 @@ The key highlights of this model are:
 \end{description}
 \begin{figure}[t]
  	\begin{center}
- 		\includegraphics[scale=0.3]{Figures/futureFlowDiagram.png}
+ 		\includegraphics[scale=0.35]{Figures/futureFlowDiagram.png}
  		\caption{Schematic flow diagram of a future\protect\cite{kaiser2009parallex}.
  		An asynchronous function invocation immediately returns a future, while the function is executed on another thread and potentially on another locality. On the caller thread the execution can proceed further until the .get() method is called on the future: this is when the actual synchronization with the remote operation takes place.}
  		\label{fig:futureFlowDiagram}
@@ -57,7 +57,7 @@ Based on these principles, HPX was designed with a modular architecture composed
 ~\\~
 
 \paragraph{The Threading Subsystem}
-When a new thread is created, HPX queues it at an appropriate locality and it then schedules it according to configurable policies. The thread scheduling is cooperative, i.e. non-preemptive, since preemption and the overhead associated to content switches would not make sense in the context of a single application. Threads are scheduled onto a pool of OS threads, which are usually one per core, whitout requiring any kernel transition and thus removing all the overhead associated to the creation of OS threads.
+When a new thread is created, HPX queues it at an appropriate locality and it then schedules it according to configurable policies. The thread scheduling is cooperative, i.e. non-preemptive, since preemption and the overhead associated to content switches would not make sense in the context of a single application. Threads are scheduled onto a pool of OS threads, which are usually one per core, without requiring any kernel transition and thus removing all the overhead associated to the creation of OS threads.
 ~\\~
 
 \paragraph{The Parcel Subsystem}
@@ -90,7 +90,7 @@ HPX implements a performance monitoring framework based on a variety of \emph{pe
 \end{enumerate*}.
 Performance counters are first class objects, they are therefore addressable by their GID from any locality and are available to both the application and the HPX runtime for performing introspection at runtime on how well the system is performing.\cite{kaiser2014hpx}
 Performance counters expose a predefined interface and HPX exposes specific API functions allowing to create, manage and release counters, as well as to read their data in a structured way.
-Performance counters are not only available from within the application. By passing standard command line flags to an HPX application we can conveniently have the performance counters of interest periodically logged to screen or to a file during execution. Performance counter can also be accessed in realtime by other utilities by connecting to a running HPX application through its parcel transport layer\cite{kaiser2014hpx}.
+Performance counters are not only available from within the application. By passing standard command line flags to an HPX application we can conveniently have the performance counters of interest periodically logged to screen or to a file during execution. Performance counter can also be accessed in real-time by other utilities by connecting to a running HPX application through its parcel transport layer\cite{kaiser2014hpx}.
 They are useful tools for performance analysis and for identifying bottlenecks, and they are even more useful as they provide the necessary infrastructure for building resource awareness into an HPX application\cite{grubel2016using}.
 
 \begin{figure}[t]
@@ -111,7 +111,7 @@ Its execution model is based on the assumption that threading, synchronization a
 
 % In general we can define a resource in HPX as any entity which can be monitored through a performance counter. This includes services offered by the runtime system itself, as the parcel or the threading subsystems, but also OS resources consumed by HPX in all localities, such as memory, IO or network.
 HPX manages hardware resources and exposes them through an abstraction process according to its execution model. With the exception of percolation, which is described later in this section, in HPX we can consider as resources all these abstractions provided by the runtime system.
-For example worker threads, localities and the parcel subsistem are respectively abstractions of processing units, compute nodes and the network infrastructure. Task queues are instead a software entity type of resource which does not correspond to any hardware resource but represents the load associated with a processing unit.
+For example worker threads, localities and the parcel subsystem are respectively abstractions of processing units, compute nodes and the network infrastructure. Task queues are instead a software entity type of resource which does not correspond to any hardware resource but represents the load associated with a processing unit.
 
 It is also important to consider that the performance monitoring framework --- i.e. the infrastructure allowing an application to retrieve performance statistics about the underlying resources and which enables adaptivity on the application side --- can be extended by new, user-defined, performance counters, thus potentially broadening the set of resources the application can be aware of.
 
@@ -143,8 +143,8 @@ HPX can include data locality awareness in task scheduling and its task dependen
 \paragraph{AGAS}
 Although AGAS does not a priori imply resource awareness, it is an important feature within HPX in support for adaptivity. It ``is a dynamic and adaptive address space
 which evolves over the lifetime of an application'' and ``is the foundation for dynamic locality control as objects can be moved to other localities without changing their global address''.\cite{kaiser2014hpx}
-This allows implementing mechanisms to relocate objects to different localities in response to performance metrics and resource constraints \cite{amatya2014parallel} and still being able to access them from the rest of the application in a transparent way. The migration decision has to be based on performance metrics and be aware of resources also for what concerns the target locality, in order to ensure a better performance as outcome. This requires a performance monitoring infrastructure allowing access to metrics for remote localities, which in HPX is fullfilled by performance counters.
-The object relocation logic can be therefore completely decoupled from the code accessing the objects and this clearly allows a much cleaner and modular code and it fullfills the underlying design goal of having parallelization and data distribution internalities as much hidden from the programmer as possible.
+This allows implementing mechanisms to relocate objects to different localities in response to performance metrics and resource constraints \cite{amatya2014parallel} and still being able to access them from the rest of the application in a transparent way. The migration decision has to be based on performance metrics and be aware of resources also for what concerns the target locality, in order to ensure a better performance as outcome. This requires a performance monitoring infrastructure allowing access to metrics for remote localities, which in HPX is fulfilled by performance counters.
+The object relocation logic can be therefore completely decoupled from the code accessing the objects and this clearly allows a much cleaner and modular code and it fulfills the underlying design goal of having parallelization and data distribution internalities as much hidden from the programmer as possible.
 ~\\~
 
 \paragraph{Percolation}

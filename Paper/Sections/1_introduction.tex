@@ -8,21 +8,21 @@
 % However, the time of being able to achieve good parallel performance on very high scale problems by using MPI+X, with X being any means for intra-node parallelization\footnote{as e.g. OpenMP or CUDA}, and careful programming seems to be coming to an end soon too\todo{find some cit supporting this}\cite{heller2017hpx}.
 
 Current supercomputers are approaching the long awaited exascale and are characterized by millions of cores, distributed not only over nodes but also over several different architectures as many-core CPUs, GPUs, gpGPUs\footnote{General Purpose GPUs.} and FPGAs\footnote{Field Programmable Gate Arrays.}.
-The number of processing units and their heterogenicity makes it extremely complex to program them using static and manual resource allocation paradigms.
+The number of processing units and their heterogeneity makes it extremely complex to program them using static and manual resource allocation paradigms.
 
 Furthermore, many important application classes are characterized by highly unbalanced execution trees (e.g. AMR\footnote{Adaptive Mesh Refinement} strategies): in these cases the resource requirements and the load are inherently unbalanced and difficult to mitigate.
-This impacts on parallel performance and causes a suboptimal resource usage, where most of the processes sit waiting for the few more expensive ones to finish their respective computations.
+This impacts on parallel performance and causes a sub-optimal resource usage, where most of the processes sit waiting for the few more expensive ones to finish their respective computations.
 
 Solving this problem and the ability to effectively and efficiently scale computations up to the current supercomputer capabilities requires the possibility to change resource allocation and requirements dynamically.
 
 This is where \emph{resource aware computing} comes into play: as a general concept, we would like applications and systems to be able to react to different load distributions and resource availability directly at runtime. Resource awareness can be seen at all levels of a system: starting from hardware and operating system, through the runtime environment of choice and the application. But resource awareness can also be facilitated and supported by the choice of appropriate algorithms and programming models.
 
 % The current predominant approach in HPC is to use the Bulk Synchronous Parallel (BSP) \todo{Maybe better to talk about CSP (communicating sequential processes)?} computing model\cite{cheatham1996bulk}. This is is based on splitting the computation in \emph{supersteps}: each superstep can be parallelized on several threads which then undergo a global synchronization (a barrier) at the end. Wiring all these supersteps together in the right order then yields the entire computation, which is essentially retaining its high-level sequentiality.
-The current predominant programming model in HPC is to use a \emph{fork-join} model for shared memory parallelization together with a \emph{Communicating Sequential Processes (CSP)}\cite{hoare1978communicating} for distributed memory parallelization. This is done in practice by leveraging respectively OpenMP and MPI.
+The current predominant programming model in HPC is to use a \emph{fork-join} model for shared memory parallelization together with a \emph{Communicating Sequential Processes (CSP)}\cite{hoare1978communicating} model for distributed memory parallelization. This is done in practice by leveraging respectively OpenMP and MPI.
 This hybrid model involves many synchronization barriers at the boundaries of parallel regions, which are often global or involve a high number of parallel processes.
 
 % While this model was proposed in an effort to standardize the approach to parallelization in the nineties, it is easy to see its limitations in today's HPC landscape.
-Such barriers quickly become bottlenecks when the number of processes increase and in case of any load inbalance, since all threads will have to wait for the slowest one to complete its tasks (Figure \ref{fig:globalBarriers}).
+Such barriers quickly become bottlenecks when the number of processes increase and in case of any load unbalance, since all threads will have to wait for the slowest one to complete its tasks (Figure \ref{fig:globalBarriers}).
 As foreseen by the Exascale Study Group in 2008: ``Somewhere between Petascale and Exascale computing [...] the MPI model may find its limit''.\cite{bergman2008exascale}
 % This can partly be solved by leveraging clever decompositions into processes and by performing synchronization barriers on specific subsets of them. However the complexity of these approaches quickly becomes extremely challanging to manage and, most importantly, they require specific solutions to be carefully crafted within each application, therefore requiring the developer to create ad-hoc solutions which cannot be reused.
 

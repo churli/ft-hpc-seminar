@@ -9,7 +9,7 @@
 % The code example reported here is based on assignments of the Parallel Programming course. I have implemented this solution with HPX as an alternative to the one based on PThreads required by that course.
 
 \subsection{Mandelbrot set}
-Drawing the Mandelbrot set is a classical example of an \emph{embarassingly parallel} problem, i.e. a problem which can be parallelized with little or no dependency between the parallel components. In this case there is no dependency at all, since each pixel can be computed independently from the others.
+Drawing the Mandelbrot set is a classical example of an \emph{embarrassingly parallel} problem, i.e. a problem which can be parallelized with little or no dependency between the parallel components. In this case there is no dependency at all, since each pixel can be computed independently from the others.
 
 However, pixels belonging to the set and pixels at different distances from the boundary require different computational efforts to be drawn\footnote{Deciding whether a complex number belongs to the Mandelbrot set is done by checking if an associated sequence converges: where the sequence diverges faster, the point is quickly marked as external, while where the divergence is slower or where the sequence converges, it takes longer before a decision is reached.}, causing the parallel tasks to be potentially unbalanced.
 
@@ -25,7 +25,7 @@ Usually the image is split into ``slices'' containing a certain number of rows o
 The traditional way to ensure load balancing in a PThreads implementation is to split the image into small slices and to assign one of these to each thread; as soon as a thread finishes processing its slice, it gets a new one and proceeds further.
 This requires additional code for managing how threads can get new work to do and it also requires synchronization, to ensure that no two threads get the same slice to process.
 
-The implementation with HPX is much simpler: for each row of the image an \verb:async: call of the compute kernel is performed and the resulting future is stored into a vector. When all the asynchonous tasks have been created, \verb+hpx::wait_all+ is called on the vector of futures, making sure all tasks are completed before exiting.
+The implementation with HPX is much simpler: for each row of the image an \verb:async: call of the compute kernel is performed and the resulting future is stored into a vector. When all the asynchronous tasks have been created, \verb+hpx::wait_all+ is called on the vector of futures, making sure all tasks are completed before exiting.
 
 I have tested strong scaling\footnote{How runtime improves by increasing the number of threads for a fixed problem size.} on the HPX- and PThread-based versions, with different problem sizes. I have also implemented and tested, for comparison purpose, a simple OpenMP-based version, which just parallelizes the outer loop (the row-loop). It uses dynamic scheduling for load balancing and a stride of 1 for consistency with the task grain size used with HPX.
 
@@ -37,7 +37,7 @@ This is clearly a toy example but it shows how HPX allows achieving good perform
 ~\\~
 
 \subsection{Reading performance counters from the command line}
-Although it is possible to access performance counter data from within the application, using the HPX API, it is also possible to make the HPX runtime print data from any performance counter to the commandline. This can be useful for debugging or for manual tuning of an HPX application.
+Although it is possible to access performance counter data from within the application, using the HPX API, it is also possible to make the HPX runtime print data from any performance counter to the command line. This can be useful for debugging or for manual tuning of an HPX application.
 
 This is achieved by passing extra flags to an HPX application and is completely handled by the runtime system, thus not requiring any change in the application code.
 
