@@ -8,6 +8,7 @@
 \usepackage[utf8]{inputenc}
 %%%
 \usepackage[english]{babel}
+% \usepackage[inline]{enumitem} % To get roman numbers, breaks normal arrows...
 % \usepackage{microtype}
 % \usepackage{array} % needed for \arraybackslash
 % \usepackage{graphicx}
@@ -22,7 +23,7 @@
 
 \title[]{How runtime systems can support resource awareness in HPC: the HPX case}
 \author{Tommaso Bianucci}
-\date{00 June 2017}
+\date{22 June 2018}
 \institute{Technische Universität München}
 %\logo{\includegraphics[width=15mm]{logo}}
 \usetheme{Dresden}
@@ -39,6 +40,121 @@
 
 \begin{frame}
 \maketitle
+\end{frame}
+
+\section{Introduction}
+\begin{frame}
+	\frametitle{Exascale is hard}
+	\begin{itemize}
+		\item Millions of cores
+		\item $10^4$ nodes
+		\item Etherogeneous hardware
+		\begin{itemize}
+			\item Manycore CPUs
+			\item GPUs
+			\item FPGAs
+		\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Applications are hard}
+	\begin{itemize}
+		\item \emph{Scaling-impaired} applications
+		\item Unbalanced execution tree
+	\end{itemize}
+	\pause
+	This causes:
+	\begin{itemize}
+		\item Poor parallel performance
+		\item Suboptimal resource usage
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Programming model matters}
+	Current predominant model in HPC:
+	\begin{itemize}
+		\item \emph{Fork-join} for shared memory (OpenMP)
+		\item \emph{Communicating Sequential Processes} for distributed memory (MPI)
+	\end{itemize}
+	\pause
+	Problem:
+	\begin{itemize}
+		\item Global barriers
+		\item Load imbalance
+	\end{itemize}
+% We will see an alternative later
+\end{frame}
+
+\section{Resource awareness}
+\begin{frame}
+	\frametitle{Running blindly does not pay}
+	Resource awareness
+	\begin{itemize}
+		\item Adaptive allocation and usage of resources
+		\item At runtime vs. before execution
+	\end{itemize}
+	% \pause
+	% Resources are
+\end{frame}
+
+\begin{frame}
+	\frametitle{What are resources?}
+	\begin{enumerate}
+		\item Hardware entities
+			\begin{itemize}
+				\item Computational units
+				\item Memory
+				\item Bus/network bandwidth
+				\item I/O devices
+			\end{itemize}
+		\item Software entities
+			\begin{itemize}
+				\item Buffers
+				\item Queues
+			\end{itemize}
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Different levels of awareness}
+	\begin{enumerate}
+		\item Embedded computing
+		\begin{itemize}
+			\item Deal with power, aging, thermal effects/problems\\
+			E.g.: Invasive computing on MPSoC
+		\end{itemize}
+		\pause
+		\item Application/runtime system level
+		\begin{itemize}
+			\item Steer the execution to dynamically fit resources\\
+			E.g.: load balancing, task scheduling
+			\item Query resource state at runtime\\
+			E.g.: task grain size tuning
+		\end{itemize}
+		\pause
+		\item Supercomputing facility
+		\begin{itemize}
+			\item Efficient elastic job scheduling\\
+			E.g.: Invasive MPI + job scheduler integration
+		\end{itemize}
+	\end{enumerate}
+\end{frame}
+
+\section{HPX}
+\begin{frame}
+	\frametitle{Title}
+	\begin{itemize}
+		\item Foo
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Title}
+	\begin{itemize}
+		\item Foo
+	\end{itemize}
 \end{frame}
 
 % \section{Tensori}
