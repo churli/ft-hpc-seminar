@@ -96,3 +96,41 @@ When the result is needed, the get() method is called on the future and this tri
 
 23) How is this put together to get a different programming model?
 Here we have the different localities, each with its own memory.
+
+24) HPX adds its infrastructure: we see the AGAS covering part of the memory of each locality.
+Then we have the parcelport, i.e. the message passing infrastructure.
+And for each locality we have a thread scheduler.
+
+25) Each thread scheduler manages a pool of preallocated hardware/OS threads, called the worker threads, and it feeds the various tasks to them.
+This way we avoid the overhead of spawning an OS thread each time.
+Since tasks return futures and can also depend on futures, we get a dependency graph which actually represent the true data dependencies.
+
+26) Here we see the dependencies which can go across the localities. If the overhead of this system is kept in control, we can achieve better performances than the fork-join one because of reducing global synch and idle time. At the same time, we get this with a very simple code, just pass futures around and we don't need to worry about dependencies and synch explicitly.
+
+27) So, how does HPX fit in what we talked about for RA?
+Because of its features and design, HPX is quite good at supporting adaptivity, if you want to include it in your application.
+
+28) First of all the task scheduling: it is designed to prevent starvation, i.e. when a worker thread must idle because there is no work it can do at the moment (e.g. because synch). It achieves this by work stealing: if there is an imbalance in the worker threads' queues, the thread scheduler steals work from where the load is higher and transfers it where it is slower.
+This is also done in a NUMA-aware way: meaning that is done preferentially between threads belonging to the same NUMA domain.
+
+29) The AGAS supports adaptivity because it supports dynamic relocation of objects: so we can change the physical position of an object without changing its GID. This allows moving objects transparently to the rest of the application.
+
+30) Percolation is a way to send special tasks to specific hardware accelerators: this allows effciently using GPUs or FPGAs through OpenCL.
+
+31) Performance counter: their infrastructure allows easy retrieval and integration of statistics from resources into the application.
+Counters are objects which can be accessed globally, so it is possible to easily retrieve data even from remote resources.
+An example of how PC have been used for adaptivity is automatic task-grain size.
+
+32) HPX has good support for RA, but also some limitations which could indicate the way forward for its development.
+The first one is that the HPX runtime system is, itself, not elastic, i.e. it cannot grow or shrink the worker threads or localities at runtime. It would be very interesting to get invasive capabilities built into HPX.
+
+33) There is no support for power management and enery awareness yet. For example it would be interesting to get Dynamic Voltage and Frequency Scaling capabilities in it.
+
+34) No effort has been made to get fault tolerance capabilities into HPX yet.
+
+##### If there is still time!!! #####
+
+Show the example
+
+##### Then go to summary!
+
