@@ -17,12 +17,42 @@
 % \usepackage{graphicx}
 % \usepackage{adjustbox} % for \adjincludegraphics
 % \usepackage{soul}
-% \usepackage{color}
+\usepackage{color}
 % \usepackage{animate}
 
 % \usepackage{../../TesiTriennale/Manoscritto/Styles/commands}
-
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
 \usepackage{listings}
+\lstset{ 
+  % backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  basicstyle=\tiny,        % the size of the fonts that are used for the code
+  breakatwhitespace=true,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  % deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  % extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  frame=single,	                   % adds a frame around the code
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue},       % keyword style
+  language=C,                 % the language of the code
+  % morekeywords={*,...},            % if you want to add more keywords to the set
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  rulecolor=\color{gray},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,	                   % sets default tabsize to 2 spaces
+  % title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
 
 \newcommand{\nota}[1]{\textcolor{red}{#1}}
 
@@ -347,19 +377,67 @@ execution model for scaling-impaired applications” 2009.
 
 \begin{frame}[fragile]
 	\frametitle{Mandelbrot: kernel}
-	TODO: here insert a listing of futurized code
+\begin{lstlisting}[language=C]
+void mandelbrot_kernel(int taskNo, staticData *sd) {
+	// Computes one row of the image
+	int i = taskNo;
+	for (int j=0; j < sd->xRes; ++j) {
+		int x = getX(j, sd);
+		int y = getY(i, sd);
+		complex double Z = 0 + 0*I;
+		complex double C = x + y*I;
+		
+		int k = 0;
+		do {	// Check the convergence of the sequence
+			Z = Z * Z + C;
+			k++;
+		} while (cabs(Z) < 2 && k < max_iter);
+
+		if (k == max_iter) {	// In case it did not diverge...
+			memcpy(img[i][j], black, 3); //...we set a black pixel
+		}
+		else {	// If it diverged...
+			//...we set the color according to k (#iterations)
+			memcpy(img[i][j], getColor(k), 3);
+		}
+	}
+}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
 	\frametitle{Mandelbrot: sequential code}
-	\begin{lstlisting}[language=C]
-		a = 20;
-	\end{lstlisting}
+\begin{lstlisting}[language=C]
+void mandelbrot_seq(...) {
+
+	staticData *sd = assembleStaticData(...);
+
+	// Iterate on rows, sequentially
+	for (int i=0; i < yRes; ++i)
+	{
+		mandelbrot_kernel(i, sd);
+	}
+}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
 	\frametitle{Mandelbrot: futurized code}
-	TODO: here insert a listing of futurized code
+	\begin{lstlisting}[language=C++]
+void mandelbrot_seq(...) {
+
+	staticData *sd = assembleStaticData(...);
+
+	std::vector<hpx::future<void>> futures;
+	for (int i=0; i < yRes; ++i)
+	{
+		hpx::future<void> f = hpx::async(&mandelbrot_kernel, i, sd);
+		futures.push_back(f);
+	}
+
+	hpx::wait_all(futures);
+}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}
@@ -370,9 +448,9 @@ execution model for scaling-impaired applications” 2009.
 	\end{center}
 \end{frame}
 
-\section{Conclusions}
+\section{Summary}
 \begin{frame}
-	\frametitle{Conclusions}
+	\frametitle{Summary}
 	\begin{itemize}
 		\item Future exascale computing requires smart code.
 		\item Resource awareness can be a way to achieve better performance.
