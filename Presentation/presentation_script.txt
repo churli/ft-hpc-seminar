@@ -1,6 +1,6 @@
-1) Good morning! I am Tommaso Bianucci and today I will talk about 
-	resource awareness 
-	and about a runtime system for HPC called HPX.
+1) Good morning! I am Tommaso Bianucci and today I will
+	give you an overview of what is resource awareness 
+	and then go a bit deeper describing a runtime system for HPC called HPX, which uses some ideas from RA.
 But first I would like to quickly describe the context and the current main challanges in the HPC field.
 
 2) Hardware.
@@ -40,4 +40,59 @@ We can see a parallel region is started and several threads work in parallel (th
 Here we can see that before performing a reduction, e.g. summing together all the results of each thread, (which implies a synchronization barrier) we need to wait for the slowest.
 Then the reduction itself do not involve all the threads, therefore causing again idling in the resources.
 
-10) So we see how limits of the semantics of a programming model can cause limits and inefficiencies in the execution.
+11) So we see how limits of the semantics of a programming model can cause limits and inefficiencies in the execution.
+
+12) How can we tackle these problems in our software?
+Among the other techniques, I am now going to describe Resource Awareness.
+
+13) Resource awareness is a broad spectrum of techniques aimed at achieving runtime adaptivity in resource allocation and usage.
+So the main underlying points are:
+	The application/system is able to adaptively modulate how many resources are allocated to it and how much load to put on them.
+	The application/system is aware of the resources it uses and monitor those in some way.
+	This monitoring and adaptation takes place at runtime instead of before, as with normal parameter tuning.
+
+14) What do we mean with the term "resources"?
+For sure we have a whole spectrum of possible hardware entities which the application can be aware of:
+	Computational units: as CPU/GPU/manycore/FPGA
+	Memory: properties as memory hierarchy, access speed in NUMA contexts
+	Bandwidth(s): available residual bw on links, latencies, state of network devices
+	I/O devices: if we can freely access disk or if it is in use
+	Power or thermal: these are not directly devices but properties of the hardware which may be important to react to.
+
+15) But we can also have software entities as resources.
+As the state of buffers (e.g. in case of communication) or queues (e.g. in case of work scheduling).
+
+16) Awareness can be at different levels and with different purposes.
+We can see it at "low level", e.g. in embedded computing, when a system has to manage and react to power/aging/thermal effects.
+We also have an example in automatic allocation of resources in Multi Processor Systems on Chip with Invasive computing, which is also researched in our chair: Invasive computing is about the ability for a program which is running on a core, to query the state of a neighbor core and, if free, "invade and infect" it (i.e. claim it and copy its data/code there) and use it for parallelism and release it again once done (retreat phase).
+
+17) We can also have awareness at a "mid level", i.e. in applications or runtime systems.
+This covers e.g. including features in our algorithms to deal with different states of resources.
+Examples are Load Balance or task scheduling.
+And of course the facilities provided by runtime systems to access resource status/statistics from an application.
+An example of this is the ability to query statistics about overheads and adjust task grain size at runtime.
+--> This level is where we will focus when discussing HPX.
+
+18) At an higher level, e.g. that of a supercomputing facility, we might be interested in scheduling jobs and allocating them resources in a way to optimize throughput or energy consumption levels. That is, to keep the load within a certain band.
+This is the example of what, again, the Invasive Computing research going on in our chair is working on now.
+They have an MPI implementation which allows dynamic allocation/deallocaton of new processes at runtime, depending on the parallelism required by the application in that phase.
+This together with a smart scheduler supporting this model, can be used to allocate jobs in a way to keep the energy consumption always within a certain band, which is something very important for supermuc.
+
+19) HPX, stands for High Performance paralleX.
+
+20) It uses a task-based approach, where there isn't a parallel region, but functions are invoked asynchronously (so a task is started on another thread) and the threads are synchronized only when their output is required. We will see further details on this in a minute.
+It addresses both shared and distributed memory types of parallelization: so it is both for intra and inter node parallelism.
+It aims to keep the overheads down as much as possible and to make it possible to use fine-grained parallelism, i.e. tasks are of small size. Which makes things easier in lots of cases.
+
+21) Its foundational principles are:
+	Async sched and lightweight synch: as we mentioned, we don't have parallel regions. We spawn tasks and we synch each one of them only when needed.
+	AGAS: as potentially run on several machines, whith disjoint memory, this is an abstraction to get a virtual address space spanning all the localities. This is usually done in a partitioned fashion: i.e. the global space is partitioned statically with addresses mapping to localities. In HPX this is done in a flexible way, where the global identifier (GID) is dynamically mapped to hardware. We will see interesting consequence of this.
+	Performance counters: this is a very useful infrastructure to get statistics from the runtime itself (software entities) but also from hardware: there is PAPI integration and custom counters can be easily implemented and used in any part of the application.
+
+22) Now let's see how async exec and sync is achieved.
+Through futures.
+The function is invoked asynch. and immediately yields a future object. The task is then scheduled on another thread and potentially another locality.
+When the result is needed, the get() method is called on the future and this triggers the sync. If the task is completed it will get the result, otherwise we will have to wait for completion.
+
+23) How is this put together to get a different programming model?
+Here we have the different localities, each with its own memory.
