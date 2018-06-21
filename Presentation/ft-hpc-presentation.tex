@@ -8,8 +8,11 @@
 \usepackage[utf8]{inputenc}
 %%%
 \usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
 % \usepackage[inline]{enumitem} % To get roman numbers, breaks normal arrows...
-% \usepackage{microtype}
+\usepackage{microtype}
+% \usepackage{eulervm}
 % \usepackage{array} % needed for \arraybackslash
 % \usepackage{graphicx}
 % \usepackage{adjustbox} % for \adjincludegraphics
@@ -19,6 +22,8 @@
 
 % \usepackage{../../TesiTriennale/Manoscritto/Styles/commands}
 
+\usepackage{listings}
+
 \newcommand{\nota}[1]{\textcolor{red}{#1}}
 
 \title[]{How runtime systems can support resource awareness in HPC: the HPX case}
@@ -27,7 +32,7 @@
 \institute{Technische Universität München}
 %\logo{\includegraphics[width=15mm]{logo}}
 \usetheme{Dresden}
-%\usecolortheme{wolverine}
+% \usecolortheme{beaver}
 %\useoutertheme[right]{sidebar}
 \setbeamercovered{dynamic}
 % \setbeamertemplate{theorems}[numbered]
@@ -36,6 +41,20 @@
 % \theoremstyle{plain}
 % \newtheorem{teorema}{Teorema}
 
+% Mastruzzo per poter controllare gli odiosi pallini di navigazione
+\makeatletter
+\let\beamer@writeslidentry@miniframeson=\beamer@writeslidentry
+\def\beamer@writeslidentry@miniframesoff{%
+  \expandafter\beamer@ifempty\expandafter{\beamer@framestartpage}{}% does not happen normally
+  {%else
+    % removed \addtocontents commands
+    \clearpage\beamer@notesactions%
+  }
+}
+\newcommand*{\miniframeson}{\let\beamer@writeslidentry=\beamer@writeslidentry@miniframeson}
+\newcommand*{\miniframesoff}{\let\beamer@writeslidentry=\beamer@writeslidentry@miniframesoff}
+\makeatother
+% 
 \begin{document}
 
 \begin{frame}
@@ -44,10 +63,11 @@
 
 \section{Introduction}
 \begin{frame}
-	\frametitle{Exascale is hard}
+	\frametitle{Exascale will be hard}
 	\begin{itemize}
-		\item Millions of cores
-		\item $10^4$ nodes
+		\item ExaFLOPS/s = $10^{18}$ FLOPS/s
+		\item Billions of cores?
+		% \item $10^4$ nodes
 		\item Etherogeneous hardware
 		\begin{itemize}
 			\item Manycore CPUs
@@ -55,13 +75,18 @@
 			\item FPGAs
 		\end{itemize}
 	\end{itemize}
+	\pause
+	\vspace{5mm}
+	$\longrightarrow$ An extreme degree of parallelism is required.
 \end{frame}
 
 \begin{frame}
 	\frametitle{Applications are hard}
 	\begin{itemize}
 		\item \emph{Scaling-impaired} applications
+		% Esempio?
 		\item Unbalanced execution tree
+		% Qui esempio e' AMR
 	\end{itemize}
 	\pause
 	This causes:
@@ -69,6 +94,10 @@
 		\item Poor parallel performance
 		\item Suboptimal resource usage
 	\end{itemize}
+	\pause
+	\vspace{5mm}
+	$\longrightarrow$ Some applications do not scale well.
+	% e qui spiega cosa vuol dire scalare
 \end{frame}
 
 \begin{frame}
@@ -76,10 +105,11 @@
 	Current predominant model in HPC:
 	\begin{itemize}
 		\item \emph{Fork-join} for shared memory (OpenMP)
+		\pause
 		\item \emph{Communicating Sequential Processes} for distributed memory (MPI)
 	\end{itemize}
 	\pause
-	Problem:
+	Problems:
 	\begin{itemize}
 		\item Global barriers
 		\item Load imbalance
@@ -87,16 +117,32 @@
 % We will see an alternative later
 \end{frame}
 
+\begin{frame}
+	\frametitle{Programming model matters (2)}
+	\vspace{-3mm}
+	\begin{center}
+		\includegraphics[width=80mm]{Figures/globalBarriersAndThreadIdleTime.png}\\
+		\tiny P. A. Grubel: "Dynamic adaptation in hpx - a task-based parallel runtime system" 2016.
+		\normalsize
+	\end{center}
+	\pause
+	$\longrightarrow$ Limits of programming models can limit parallelism.
+	% e qui spiega cosa vuol dire scalare
+	% here it is also important to mention various overheads of parallelization!
+\end{frame}
+
 \section{Resource awareness}
 \begin{frame}
-	\frametitle{Running blindly does not pay}
+	% \frametitle{Running blindly does not pay}
+	\frametitle{Complex hardware requires clever software}
+	\pause
 	Resource awareness
+	\vspace{5mm}
 	\begin{itemize}
 		\item Adaptive allocation and usage of resources
+		\item The system is aware of its own resources
 		\item At runtime vs. before execution
 	\end{itemize}
-	% \pause
-	% Resources are
 \end{frame}
 
 \begin{frame}
@@ -108,7 +154,10 @@
 				\item Memory
 				\item Bus/network bandwidth
 				\item I/O devices
+				\item Power
+				\item Thermal
 			\end{itemize}
+		\pause
 		\item Software entities
 			\begin{itemize}
 				\item Buffers
@@ -121,8 +170,10 @@
 	\frametitle{Different levels of awareness}
 	\begin{enumerate}
 		\item Embedded computing
+		% Cosa vuol dire di preciso embedded? Che ci scriviamo roba baremetal?
 		\begin{itemize}
-			\item Deal with power, aging, thermal effects/problems\\
+			\item Deal with power, aging, thermal effects/problems
+			\item Manage low-level access to resources\\
 			E.g.: Invasive computing on MPSoC
 		\end{itemize}
 		\pause
@@ -130,7 +181,7 @@
 		\begin{itemize}
 			\item Steer the execution to dynamically fit resources\\
 			E.g.: load balancing, task scheduling
-			\item Query resource state at runtime\\
+			\item Query resource statistics at runtime\\
 			E.g.: task grain size tuning
 		\end{itemize}
 		\pause
@@ -144,395 +195,203 @@
 
 \section{HPX}
 \begin{frame}
-	\frametitle{Title}
+	\frametitle{High Performance paralleX}
+	% Here we dig into the 2 level of awareness
+	\pause
+	C++ runtime system for
+	\vspace{3mm}
 	\begin{itemize}
-		\item Foo
+		\item \emph{Task-based} parallelism
+		% definisci bene task-based
+		\item \emph{Shared memory} + \emph{Distributed memory} parallelization
+		\item Fine-grained parallelism
 	\end{itemize}
 \end{frame}
 
 \begin{frame}
-	\frametitle{Title}
+	\frametitle{HPX foundations}
+	\begin{columns}
+		\column{\dimexpr\linewidth-50mm-2mm}
+		\begin{itemize}
+			\item Asynchronous scheduling and execution
+			% Instead of synchronous "parallel regions"
+			\item Lightweight synchronization
+			% Instead of barriers, just synch based on data dependencies
+			\item Active Global Address Space (AGAS)
+			% Direct addressing of remote resources instead of message passing semantics
+			\item Performance monitoring framework
+		\end{itemize}
+		\column{50mm}
+	 		\includegraphics[width=50mm]{Figures/hpxArchitecture.png}
+	 		\tiny T. Heller et al.: “Hpx – an open source c++ standard library for parallelism and concurrency” 2017.
+		\normalsize
+	\end{columns}
+\end{frame}
+
+% \subsection{HPX 101}
+\begin{frame}
+	\frametitle{Futures}
+	\begin{center}
+		\includegraphics[width=100mm]{Figures/futureFlowDiagram.png}\\
+		\tiny H. Kaiser et al.: “Parallex an advanced parallel
+execution model for scaling-impaired applications” 2009.
+		\normalsize
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Programming model}
+	\begin{center}
+		\includegraphics[width=100mm]{Figures/hpxProgrammingModel1.png}\\
+		\vspace{3mm}
+		\tiny T. Heller: “C++ on its way to exascale and beyond - The HPX Parallel Runtime System” 2016.
+		\normalsize
+	\end{center}
+\end{frame}
+\begin{frame}
+	\frametitle{Programming model}
+	\begin{center}
+		\includegraphics[width=100mm]{Figures/hpxProgrammingModel2.png}\\
+		\vspace{3mm}
+		\tiny T. Heller: “C++ on its way to exascale and beyond - The HPX Parallel Runtime System” 2016.
+		\normalsize
+	\end{center}
+\end{frame}
+\begin{frame}
+	\frametitle{Programming model}
+	\begin{center}
+		\includegraphics[width=100mm]{Figures/hpxProgrammingModel3.png}\\
+		\vspace{3mm}
+		\tiny T. Heller: “C++ on its way to exascale and beyond - The HPX Parallel Runtime System” 2016.
+		\normalsize
+	\end{center}
+\end{frame}
+\begin{frame}
+	\frametitle{Programming model}
+	\begin{center}
+		\includegraphics[width=100mm]{Figures/hpxProgrammingModel4.png}\\
+		\vspace{3mm}
+		\tiny T. Heller: “C++ on its way to exascale and beyond - The HPX Parallel Runtime System” 2016.
+		\normalsize
+	\end{center}
+\end{frame}
+
+\section{RA in HPX}
+\begin{frame}
+	\frametitle{HPX and Resource Awareness}
+	\pause
+	Capabilities
+	\begin{enumerate}
+		\item Task scheduling\\
+			\small $\longrightarrow$ Work stealing + NUMA-awareness
+		\normalsize
+		\pause
+		\item AGAS\\
+			\small $\longrightarrow$ Dynamic relocation of objects
+		\normalsize
+		\pause
+		\item Percolation\\
+			\small $\longrightarrow$ Directly addressing HW accelerators
+		\normalsize
+		\pause
+		\item Performance counters\\
+			\small $\longrightarrow$ Allow easier integration of awareness into applications
+		\normalsize
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}
+	\frametitle{HPX and Resource Awareness (2)}
+	Limitations
 	\begin{itemize}
-		\item Foo
+		\item (An)elasticity of HPX\\
+			\small $\longrightarrow$ Worker threads and localities cannot be changed at runtime
+		\normalsize
+		\pause
+		\item Energy unawareness\\
+			\small $\longrightarrow$ E.g. no DVFS support
+		\normalsize
+		\pause
+		\item Fault tolerance\\
+			\small $\longrightarrow$ No built-in facility
+		\normalsize
 	\end{itemize}
 \end{frame}
 
-% \section{Tensori}
-% \subsection{Introduzione}
-% \begin{frame}
-% \frametitle{Cosa sono i Tensori?}
-% \begin{itemize}
-% \item Array multidimensionali
-% \item Generalizzazione di vettori e matrici
-% \end{itemize}
-% \vspace{1mm}
-% \begin{center}
-% 	\includegraphics[width=0.6\textwidth]{Img/tensors.jpg}
-% \end{center}
-% \end{frame}
+\section{Example}
+\begin{frame}
+	\frametitle{HPX coding example: the Mandelbrot set}
+	% \begin{itemize}
+	% 	\item Foo
+	% \end{itemize}
+	\begin{columns}
+		\column{\dimexpr\linewidth-65mm-2mm}
+		\pause
+		\begin{equation*}
+			\begin{cases}
+				z_{c,0} &= 0 \\
+				z_{c,n+1} &= z_{c,n}^2 + c
+			\end{cases}
+		\end{equation*}
+		\pause
+		\begin{align*}
+			\mathcal{M} & = \\
+			& \{c\in\mathbb{C} : \lim_{n\to\infty} |z_{c,n}| < +\infty \}
+		\end{align*}
+		\column{65mm}
+		\begin{center}
+			\includegraphics[width=65mm]{Figures/mandelbrot.png}
+		\end{center}
+	\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Mandelbrot: kernel}
+	TODO: here insert a listing of futurized code
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Mandelbrot: sequential code}
+	\begin{lstlisting}[language=C]
+		a = 20;
+	\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+	\frametitle{Mandelbrot: futurized code}
+	TODO: here insert a listing of futurized code
+\end{frame}
+
+\begin{frame}
+	\frametitle{Mandelbrot step by step}
+	\begin{center}
+		% \animategraphics[loop,autoplay,scale=0.15]{10}{Figures/AnimatedMandelbrot/mandelbrot_}{00000}{000099}
+		\includegraphics[width=65mm]{Figures/mandelbrot_partial.png}
+	\end{center}
+\end{frame}
+
+\section{Conclusions}
+\begin{frame}
+	\frametitle{Conclusions}
+	\begin{itemize}
+		\item Future exascale computing requires smart code.
+		\item Resource awareness can be a way to achieve better performance.
+		\item HPX has the potential to become a major runtime system for HPC, thanks to both its performance and programmability.
+	\end{itemize}
+	\pause
+	\vspace{5mm}
+	\begin{center}
+		\LARGE Thanks! \normalsize
+	\end{center}
+\end{frame}
+
+%%%%%%%
 
 % \begin{frame}
-% \frametitle{Interesse e applicazioni}
-% I tensori trovano applicazione in contesti ad elevata dimensionalità, come:
-% \begin{itemize}
-% \item Deep Learning
-% \item Analisi di segnali
-% \item Fisica e chimica computazionali
-% \end{itemize}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Curse of dimensionality}
-% I tensori sono ingombranti: \alert{$n \times n \times \cdots \times n \rightarrow n^d$}
-% \begin{itemize}
-% \item Aumento esponenziale del numero di elementi rispetto alla dimensionalità
-% \item Raggiungiamo facilmente i limiti fisici del calcolatore
-% \end{itemize}
-
-% % \vspace{5mm}
-% % $\longrightarrow$ \emph{Curse of dimensionality}
-% \end{frame}	
-
-% \subsection{Definizioni e strumenti}
-% \begin{frame}
-% \frametitle{Definizioni e strumenti}
-% \begin{itemize}
-% % \item Fibre e fette
-% \item Unfolding
-% \item Rango
-% \item SVD
-% \end{itemize}
-% \end{frame}
-
-% % \begin{frame}
-% % \frametitle{Fibre e fette}
-% % Le \emph{fibre} di un tensore sono vettori di elementi ottenute fissando tutti gli indici tranne uno.
-% % Analoghe a righe e colonne nelle matrici.
-
-% % \begin{center}
-% % 	\includegraphics[width=0.4\textwidth]{Img/fibers.jpg}
-% % \end{center}
-
-% % \pause
-% % Le \emph{fette} di un tensore sono matrici di elementi ottenute fissando tutti gli indici tranne due.
-
-% % \begin{center}
-% % 	\includegraphics[width=0.4\textwidth]{Img/slices.jpg}
-% % \end{center}
-% % \end{frame}
-
-% \begin{frame}
-% \frametitle{Unfolding}
-% \emph{Unfolding} o \emph{matricizzazione} è il processo di riportare gli elementi di un tensore su una matrice.
-
-% \begin{center}
-% 	\includegraphics[width=0.5\textwidth]{Img/unfolding.jpg}
-% \end{center}
-
-% \pause
-% Preso un tensore \A, il \emph{$k$-esimo unfolding} è dato dal considerare i primi k indici e i restanti come due multi-indici:
-% \begin{equation*}
-% 	A_k = A_k(
-% 	\underbrace{I}_{i_1,\dots,i_k}
-% 	,
-% 	\underbrace{J}_{i_{k+1},\dots,i_d}
-% 	) = A(i_1,\dots,i_d)	
-% \end{equation*}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Rango}
-% Il \emph{rango} di un tensore è il minimo numero di tensori \emph{rango-$1$} la cui somma dà il tensore di partenza.
-
-% \pause
-% \vspace{5mm}
-% Un $d$-tensore di \emph{rango} $1$ è il risultato del prodotto esterno di $d$ vettori:
-
-% \begin{columns}
-% \begin{column}{0.5\textwidth}
-% \begin{equation*}
-%   \A = v^{(1)} \circ v^{(2)} \circ \cdots \circ v^{(d)}
-% \end{equation*}
-
-% \begin{equation*}
-%   a_{i_1,i_2,\ldots,i_d} = v_{i_1}^{(1)} v_{i_2}^{(2)} \cdots v_{i_d}^{(d)}
-% \end{equation*}
-% \end{column}
-
-% \begin{column}{0.5\textwidth}
-% \begin{center}
-% 	\includegraphics[width=0.8\textwidth]{Img/rank_one_tensor.jpg}
-% \end{center}
-% \end{column}
-% \end{columns}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Decomposizione a valori singolari (SVD)}
-% La SVD ci permette di fattorizzare una matrice $A$ in:
-% \begin{equation*}
-% 	A = U \Sigma V^T
-% \end{equation*}
-% \begin{itemize}
-% 	\item $U$ e $V$ sono matrici ortonormali
-% 	\item $\Sigma$ è matrice diagonale	
-% 	\item Elementi di $\Sigma$ sono $\sigma_1 > \sigma_2 > \cdots > \sigma_r > 0$
-% 	\item \emph{Troncando} $\Sigma$ otteniamo approssimazione di rango inferiore
-% \end{itemize}
-% \end{frame}
-
-% \subsection{Decomposizioni}
-% \begin{frame}
-% \frametitle{Decomposizioni di tensori}
-% Storicamente le decomposizioni principali presentate sono state: 
-
-% \vspace{5mm}
-% \begin{columns}
-% \begin{column}{0.6\textwidth}
-% \begin{itemize}
-% \item CANDECOMP/PARAFAC (CP) %\\
-% 	% $\A \approx \sum_{r = 1}^R a_r^{(1)} \circ a_r^{(2)} \circ \cdots \circ a_r^{(d)}$
-% 	\vspace{3mm}
-% \item Tucker
-% \end{itemize}
-% \end{column}
-% \begin{column}{0.4\textwidth}
-% \includegraphics[width=0.85\textwidth]{Img/cp.jpg}
-
-% \includegraphics[width=0.7\textwidth]{Img/tucker.jpg}
-% \end{column}
-% \end{columns}
-
-% \vspace{5mm}
-% Entrambe sono computazionalmente problematiche:
-% \begin{itemize}
-% 	\item Mancanza di algoritmi di decomposizione stabili.
-% 	\item Dipendenza esponenziale del numero di parametri rispetto alla dimensionalità del tensore.
-% \end{itemize}
-% \end{frame}
-
-% \section{Tensor Train}
-% \subsection{Tensor Train}
-% \begin{frame}
-% \frametitle{Una decomposizione migliore è possibile?}
-% Vorremmo una decomposizione computazionalmente maneggevole:
-% \begin{itemize}
-% \item La memoria occupata non deve dipendere esponenzialmente dalla dimensionalità del tensore.
-% \item Deve avere un algoritmo di approssimazione e decomposizione stabile.
-% \item Necessario poter eseguire le operazioni di algebra lineare di base direttamente nel formato \emph{compresso}.
-% \end{itemize}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Tensor Train Decomposition (TT)}
-% $\A$ tensore $d$-dimensionale, $\G_i$ \emph{core} $3$-dimensionali:
-% \begin{equation*}
-% 	\A = 
-% 	\underbrace{\G_1}_{1 \times n_1 \times r_1} 
-% 	\times 
-% 	\underbrace{\G_2}_{r_1 \times n_2 \times r_2} 
-% 	\times 
-% 	\cdots 
-% 	\times 
-% 	\underbrace{\G_d}_{r_{d-1} \times n_d \times 1}
-% \end{equation*}
-% Otteniamo ogni elemento del tensore tramite moltiplicazione delle matrici $G_k(i_k)$\,:
-% \begin{equation*}
-% 	\A(i_1,i_2,\dots,i_d) = 
-% 	\underbrace{G_1(i_1)}_{1 \times r_1}
-% 	\underbrace{G_2(i_2)}_{r_1 \times r_2}
-% 	\cdots
-% 	\underbrace{G_d(i_d)}_{r_{d-1} \times 1}
-% \end{equation*}
-
-% % \begin{center}
-% % \includegraphics[width=0.5\textwidth]{Img/tt_example.jpg}
-% % \end{center}
-% Ad esempio: $\A(2,4,2,3) = \raisebox{-0.5\height}{\includegraphics[width=0.4\textwidth]{Img/tt_example_2.jpg}}$
-% \end{frame}
-
-% \subsection{Calcolo}
-% \begin{frame}
-% \frametitle{Come calcolare la TT?}
-% \begin{teorema}[Oseledets, 2011]
-% Sia \A un $d$-tensore e sia, per ogni $k$, $A_k$ il $k$-esimo unfolding.
-% Allora esiste una decomposizione TT con ranghi $r_k^{(tt)}$ t.c. $r_k^{(tt)} \leq rk(A_k) \, \forall k$
-% \end{teorema}
-
-% % \pause
-% \vspace{5mm}
-% La dimostrazione di questo teorema:
-% \begin{itemize}
-% 	\item \`E costruttiva
-% 	\item Fornisce l'algoritmo \emph{TT-SVD}
-% 	\item \`E basata sull'approssimazione delle matrici di unfolding
-% \end{itemize}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Come calcolare la TT? (2)}
-% \begin{teorema}[Oseledets, 2011]
-% Poniamo che gli unfolding $A_k$ di \A abbiano $\epsilon$-rango $r_k$.
-% Allora l'algoritmo TT-SVD produce un tensore \B in formato TT, con ranghi $r_k$ e t.c. 
-% \begin{equation*}
-%     ||\A - \B ||_F \le \epsilon \sqrt{d-1}\, .
-% \end{equation*}
-% \end{teorema}
-
-% \vspace{5mm}
-% Questo risultato:
-% \begin{itemize}
-% 	\item Assicura la stabilità dell'algoritmo TT-SVD
-% 	\item Fornisce la soglia di approssimazione sulle SVD per ottenere la precisione desiderata sulla TT
-% \end{itemize}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{TT-SVD in pillole}
-% %\nota{Inserisci qui uno schema di base dell'algo TT-SVD}
-% \begin{enumerate}
-% 	\item Calcoliamo la soglia di troncamento SVD: $\delta = \frac{\epsilon}{\sqrt{d-1}} ||\A||_F$
-% 	\item Per ogni dimensione $k$
-% 		\begin{enumerate}
-% 			\item Facciamo primo unfolding del tensore $\rightarrow C$
-% 			\item Calcoliamo $SVD_{\delta}(C) \rightarrow U,S,V$
-% 			\item Il core corrente $G_k$ è dato dall'opportuno reshape di $U$
-% 			\item Procediamo considerando come tensore il reshape di $SV^T$
-% 		\end{enumerate}
-% 	\item $TT_{\epsilon}(\A) = [G_1, \ldots, G_d]$
-% \end{enumerate}
-% \end{frame}
-
-% \subsection{Operazioni in TT}
-% \begin{frame}
-% \frametitle{Operazioni in TT}
-% \`E possibile \emph{arrotondare} ad una nuova precisione un tensore in formato TT:
-% \begin{itemize}
-% 	\item \emph{Rounding}
-% \end{itemize}
-
-% \pause
-% \vspace{3mm}
-% Le operazioni di algebra lineare sono facilmente calcolabili in formato TT:
-% \begin{itemize}
-% \item Somma
-% \item Moltiplicazione per scalare
-% \item Prodotto scalare
-% \item Norma
-% \end{itemize}
-% \end{frame}
-
-% \subsection{Numero di parametri}
-% \begin{frame}
-% \frametitle{Di quanto spazio abbiamo bisogno?}
-% \begin{equation*}
-% 	TT_\epsilon(\A) = 
-% 	\underbrace{\G_1}_{1 \times n_1 \times r_1}
-% 	\times \cdots \times
-% 	\underbrace{\G_k}_{r_{k-1} \times n_k \times r_k}
-% 	\times \cdots \times 
-% 	\underbrace{\G_d}_{r_{d-1} \times n_d \times 1}
-% \end{equation*}	
-
-% \vspace{5mm}
-% Se $\,r_k \leq r\,$ e $\,n_k \leq n\,$ per ogni $\,k$, otteniamo:
-% \begin{equation*}
-% 	2nr + (d-2)nr^2 = \alert{\mathcal{O}(dnr^2)}
-% \end{equation*}
-
-% Quindi:
-% \begin{itemize}
-% 	\item Non c'è dipendenza esponenziale dall'ordine del tensore
-% 	\item Dipendenza è principalmente sulla precisione scelta
-% \end{itemize}
-% \end{frame}
-
-% \subsection{In sintesi}
-% \begin{frame}
-% \frametitle{Abbiamo raggiunto i nostri obiettivi?}
-% \begin{itemize}
-% \item La memoria occupata non dipende esponenzialmente dal grado del tensore $\rightarrow$ {$\color{blue} \mathcal{O}(dnr^2)$} \color{black}
-% \item Esiste algoritmo di approssimazione e decomposizione stabile $\rightarrow$ \textcolor{blue}{Teorema 1 + Teorema 2}
-% \item \`E possibile eseguire le operazioni di algebra lineare di base direttamente nel formato \emph{compresso}
-% \end{itemize}
-% \end{frame}
-
-% \section{TT-Cross}
-% \subsection{Oltre i limiti di dimensionalità}
-% \begin{frame}
-% \frametitle{Non proprio...}
-% \pause
-% \alert{Tutto~funziona~solo~se~possiamo~immagazzinare~il~tensore~di~partenza.}
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Approssimazione iterativa di tensori \emph{black-box}}
-% In alcuni casi possiamo avere un tensore di cui si possano calcolare gli elementi a partire dalle coordinate $\rightarrow$ \emph{black-box}
-
-% \vspace{10mm}
-% Vorremmo poter costruire l'approssimazione TT iterativamente, calcolando e utilizzando solo alcuni elementi alla volta.
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{TT-Cross}
-% Possiamo ottenere un tale algoritmo iterativo, chiamato \emph{TT-Cross}, adattando TT-SVD:
-% \begin{itemize}
-% 	\item Approssimiamo gli unfolding tramite un loro sottoinsieme di righe e di colonne $\rightarrow$ algoritmo \emph{maxvol}
-% 	\item Si dimostra che il numero di elementi da calcolare per approssimare l'intero tensore è $\mathcal{O}(dnr^2)$
-% \end{itemize}
-
-% \vspace{5mm}
-% (Oseledets, Tyrtyshnikov, 2011)
-% \end{frame}
-
-% \section{Conclusioni}
-% \subsection{Esempio su immagini}
-% \begin{frame}
-% \frametitle{Esempio su immagini}
-% %\alert{Inseriamo le gif di esempio?}
-% % \begin{columns}
-% % \begin{column}{0.5\textwidth}
-% % 	% \animategraphics[loop,width=\linewidth]{10}{Img/cats_orig.d/cats_orig-}{0}{117}
-% % 	% \vspace{3mm}
-% % 	% \animategraphics[loop,width=\linewidth]{10}{Img/cats_4.d/cats_4-}{0}{117}
-% % 	\animategraphics[loop,width=\linewidth]{10}{Img/cats_orig.d/cats_orig-}{45}{70}
-% % 	\vspace{3mm}
-% % 	\animategraphics[loop,width=\linewidth]{10}{Img/cats_4.d/cats_4-}{45}{70}
-% % \end{column}
-% % \begin{column}{0.5\textwidth}
-% % 	% \animategraphics[loop,width=\linewidth]{10}{Img/cats_1.d/cats_1-}{0}{117}
-% % 	% \vspace{3mm}
-% % 	% \animategraphics[loop,width=\linewidth]{10}{Img/cats_7.d/cats_7-}{0}{117}
-% % 		\animategraphics[loop,width=\linewidth]{10}{Img/cats_1.d/cats_1-}{45}{70}
-% % 	\vspace{3mm}
-% % 	\animategraphics[loop,width=\linewidth]{10}{Img/cats_7.d/cats_7-}{45}{70}
-% % \end{column}
-% % \end{columns}
-% \begin{center}
-% 	% \animategraphics[loop,width=\linewidth]{10}{Img/cats_grid.d/cats_grid-}{0}{117}
-% 	\animategraphics[loop,width=\linewidth]{10}{Img/cats_grid.d/cats_grid-}{0}{0}
-% \end{center}
-% \end{frame}
-
-% \subsection{Conclusioni}
-% \begin{frame}
-% \frametitle{Conclusioni}
-% \begin{itemize}
-% 	\item I tensori permettono di trattare naturalmente problemi multidimensionali.
-% 	\item La Tensor Train Decomposition permette di rendere computazionalmente accessibili questi problemi anche a dimensionalità prima intrattabili.
-% 	\item L'approccio TT-Cross permette di trattare tensori la cui dimensionalità rende impossibile anche solo immagazzinarne la rappresentazione esplicita.
-% \end{itemize}
-
-% \pause
-% \vspace{2mm}
-% \begin{center}
-% 	\Huge Grazie!
-% \end{center}
-% \end{frame}
-
-% \subsection{Fine}
-% \begin{frame}
-% Grazie!
+% 	\frametitle{Title}
+% 	\begin{itemize}
+% 		\item Foo
+% 	\end{itemize}
 % \end{frame}
 
 \end{document}
