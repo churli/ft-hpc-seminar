@@ -1,0 +1,43 @@
+1) Good morning! I am Tommaso Bianucci and today I will talk about 
+	resource awareness 
+	and about a runtime system for HPC called HPX.
+But first I would like to quickly describe the context and the current main challanges in the HPC field.
+
+2) Hardware.
+Having a supercomputer capable of 1 exaFLOPS/s means that it is capable of performing 10^18 floating point operations per second.
+A modern CPU, assuming a perfectly pipelined and compute-bound code, can reach 1-10 GFLOPS/s. So 1 exaFLOPS is equivalent to 100Millions-1Billion of these units.
+This compute power will also be, as it is already currently done for petascale machines, distributed not only across nodes, but also across different types of hardware devices.
+The trend for CPUs is to go towards manycore: meaning hundreds of cores on a single chip, with an on-chip network.
+Then we have GPUs and FPGAs, which we have already seen in another seminar last tuesday.
+Each of these devices has its own characteristics, which we must be aware of in order to properly harness their power.
+
+3) So these machines expose an extreme degree of parallelism, which is also non-homogeneous.
+
+4) Applications.
+Not all applications like to be parallelized. There is a class of applications which is called scaling-impaired, meaning that after being parallelized on a relative low number of threads, they don't show any further speedup if new threads are added.
+Applications showing an unbalanced execution tree belong to this class: this is an intrinsic load imbalance which makes it difficult to divide the application into threads.
+An example are Adaptive Mesh Refinement methods, where the discretization mesh is adaptively refined in case of certain events, such as shockwaves, cracks, ecc. This cannot be known before running the application, making it difficult to properly parallelize.
+
+5) So, as mentioned, we get poor parallel performance, but also a suboptimal resource usage, since many resources will have to wait for a slower part of the problem to be completed.
+
+6) So some apps do not scale well, they don't like to be parallelized.
+But we also have another problem: overheads of the parallelization itself.
+
+7) This is tied to the programming model chosen for parallelizing.
+In HPC we have 2 predominant models, which are often used together:
+Fork-join is used for shared-memory parallelization, e.g. by OpenMP.
+Shared memory means that the parallelization takes place within a single machine where all the processors/cores can access the same memory space.
+FJ implies that the code has special parallel regions: when reached, the work will be spread among threads. At the end of the parallel region, a join, i.e. a synchronization operation, is performed, to resume single thread operation.
+
+8) CSP is instead what is used as model when programming in MPI.
+We have many processes, each one having its own private memory (so they can be on different machines), and they execute sequentially and perform some communication/synchronization operations with the others.
+So for example a problem can be partitioned and each process works on its part and at the end they all synchronize and exchange some information.
+
+9) These 2 models have some intrinsic problem: they use global barriers (join in FJ, barrier in CSP) and are therefore prone to load-imbalance.
+
+10) To better understand why, let's have a look at this diagram.
+We can see a parallel region is started and several threads work in parallel (the wavy arrows). Then threads start reaching the end of their work at different times because of load imbalance.
+Here we can see that before performing a reduction, e.g. summing together all the results of each thread, (which implies a synchronization barrier) we need to wait for the slowest.
+Then the reduction itself do not involve all the threads, therefore causing again idling in the resources.
+
+10) So we see how limits of the semantics of a programming model can cause limits and inefficiencies in the execution.
