@@ -132,39 +132,50 @@
 
 \begin{frame}
 	\frametitle{Programming model matters}
+	% \vspace{1mm}
 	Current predominant model in HPC:
 	\begin{itemize}
 		\item \emph{Fork-join} for shared memory (OpenMP)
-		\pause
 		\item \emph{Communicating Sequential Processes} for distributed memory (MPI)
 	\end{itemize}
+	\vspace{-10mm}
 	\pause
-	Problems:
-	\begin{itemize}
-		\item Global barriers
-		\item Load imbalance
-	\end{itemize}
+	\begin{columns}
+		\column{\dimexpr\linewidth-75mm}
+		Problems:
+		\begin{itemize}
+			\item Global barriers
+			\item Load imbalance
+		\end{itemize}
+		\column{80mm}
+		\begin{center}
+			\includegraphics[width=70mm]{Figures/globalBarriersAndThreadIdleTime.png}\\
+			\vspace{-1mm}
+			\tiny P.A.Grubel:"Dynamic adaptation in hpx, a task-based parallel runtime system" 2016.
+			\normalsize
+		\end{center}
+	\end{columns}
 % We will see an alternative later
 \end{frame}
 
-\begin{frame}
-	\frametitle{Programming model matters (2)}
-	\vspace{-3mm}
-	\begin{center}
-		\includegraphics[width=80mm]{Figures/globalBarriersAndThreadIdleTime.png}\\
-		\tiny P. A. Grubel: "Dynamic adaptation in hpx - a task-based parallel runtime system" 2016.
-		\normalsize
-	\end{center}
-	\pause
-	$\longrightarrow$ Limits of programming models can limit parallelism.
-	% e qui spiega cosa vuol dire scalare
-	% here it is also important to mention various overheads of parallelization!
-\end{frame}
+% \begin{frame}
+% 	\frametitle{Programming model matters (2)}
+% 	\vspace{-3mm}
+% 	\begin{center}
+% 		\includegraphics[width=80mm]{Figures/globalBarriersAndThreadIdleTime.png}\\
+% 		\tiny P. A. Grubel: "Dynamic adaptation in hpx - a task-based parallel runtime system" 2016.
+% 		\normalsize
+% 	\end{center}
+% 	\pause
+% 	$\longrightarrow$ Limits of programming models can limit parallelism.
+% 	% e qui spiega cosa vuol dire scalare
+% 	% here it is also important to mention various overheads of parallelization!
+% \end{frame}
 
 \section{Resource awareness}
 \begin{frame}
 	% \frametitle{Running blindly does not pay}
-	\frametitle{Complex hardware requires clever software}
+	\frametitle{Resource awareness: clever software for complex hardware}
 	\pause
 	Resource awareness
 	\vspace{5mm}
@@ -199,27 +210,28 @@
 \begin{frame}
 	\frametitle{Different levels of awareness}
 	\begin{enumerate}
-		\item Embedded computing
+		\item Embedded computing\\
 		% Cosa vuol dire di preciso embedded? Che ci scriviamo roba baremetal?
-		\begin{itemize}
-			\item Deal with power, aging, thermal effects/problems
-			\item Manage low-level access to resources\\
+		% \begin{itemize}
+		% 	\item Deal with power, aging, thermal effects/problems
+		% 	\item Manage low-level access to resources\\
 			E.g.: Invasive computing on MPSoC
-		\end{itemize}
+		% \end{itemize}
+		\vspace{3mm}
 		\pause
-		\item Application/runtime system level
-		\begin{itemize}
-			\item Steer the execution to dynamically fit resources\\
+		\item Application/runtime system level\\
+		% \begin{itemize}
+		% 	\item Steer the execution to dynamically fit resources\\
+		% 	\item Query resource statistics at runtime\\
 			E.g.: load balance, task scheduling
-			\item Query resource statistics at runtime\\
-			E.g.: task grain size tuning
-		\end{itemize}
+		% \end{itemize}
+		\vspace{3mm}
 		\pause
-		\item Supercomputing facility
-		\begin{itemize}
-			\item Efficient elastic job scheduling\\
+		\item Supercomputing facility\\
+		% \begin{itemize}
+		% 	\item Efficient elastic job scheduling\\
 			E.g.: Invasive MPI + job scheduler integration
-		\end{itemize}
+		% \end{itemize}
 	\end{enumerate}
 \end{frame}
 
@@ -325,7 +337,7 @@ execution model for scaling-impaired applications” 2009.
 		\normalsize
 		\pause
 		\item Performance counters\\
-			\small $\longrightarrow$ Allow easier integration of awareness into applications
+			\small $\longrightarrow$ Easier integration into applications
 		\normalsize
 	\end{enumerate}
 \end{frame}
@@ -333,7 +345,7 @@ execution model for scaling-impaired applications” 2009.
 \begin{frame}
 	\frametitle{HPX and Resource Awareness (2)}
 	Limitations
-	\begin{itemize}
+	\begin{enumerate}
 		\item (An)elasticity of HPX\\
 			\small $\longrightarrow$ Worker threads and localities cannot be changed at runtime
 		\normalsize
@@ -345,7 +357,7 @@ execution model for scaling-impaired applications” 2009.
 		\item Fault tolerance\\
 			\small $\longrightarrow$ No built-in facility
 		\normalsize
-	\end{itemize}
+	\end{enumerate}
 \end{frame}
 
 \section{Example}
@@ -459,7 +471,7 @@ void mandelbrot_hpx(...) {
 	\pause
 	\vspace{5mm}
 	\begin{center}
-		\LARGE Thanks! \normalsize
+		\Huge Thanks! \normalsize
 	\end{center}
 \end{frame}
 
