@@ -23,6 +23,8 @@ struct static_data
 	double y_stepsize;
 	int palette_shift;
 	unsigned char* img;
+    hpx::lcos::local::mutex *drawMutex;
+    int *drawCounter;
 };
 
 //static int getNextTask(int *counter, int stride)
@@ -33,7 +35,7 @@ struct static_data
 //	return nextTask;
 //}
 
-static void mandelbrot_kernel(int taskNo, int taskStride, struct static_data* sd)
+static void mandelbrot_kernel(int taskNo, int taskStride, struct static_data *sd)
 {
 	double y;
 	double x;
@@ -45,6 +47,8 @@ static void mandelbrot_kernel(int taskNo, int taskStride, struct static_data* sd
 	
 	unsigned char (*img)[sd->x_resolution][3]
 		= (unsigned char (*)[sd->x_resolution][3]) sd->img;
+    unsigned char (*localImg)[sd->x_resolution][3]
+            = (unsigned char (*)[sd->x_resolution][3]) calloc(static_cast<size_t>(taskStride * sd->x_resolution * 3), sizeof(char));
 	int endTask = taskNo + taskStride;
 	for (int i = taskNo; i < endTask; ++i)
     {
@@ -69,21 +73,42 @@ static void mandelbrot_kernel(int taskNo, int taskStride, struct static_data* sd
             
             if (k == sd->max_iter)
             {
-                memcpy(img[i][j], "\0\0\0", 3);
+                memcpy(localImg[i-taskNo][j], "\0\0\0", 3);
             }
             else
             {
                 int index = (k + sd->palette_shift)
                             % (sizeof(colors) / sizeof(colors[0]));
-                memcpy(img[i][j], colors[index], 3);
+                memcpy(localImg[i-taskNo][j], colors[index], 3);
             }
         }
     }
+    // now draw the current state of the image
+    sd->drawMutex->lock();
+	// ...copying the data to the shared image
+    for (int i = taskNo; i < endTask; ++i)
+    {
+        for (int j = 0; j < sd->x_resolution; j++)
+        {
+            memcpy(img[i][j], localImg[i-taskNo][j], 3);
+        }
+    }
+    // ...writing it to file
+	char buf[512];
+	sprintf(buf, "mandelbrot_%06d.ppm", *(sd->drawCounter));
+	FILE *file = fopen(buf, "w");
+    fprintf(file, "P6\n%d %d %d\n", sd->x_resolution, sd->y_resolution, 255);
+    fwrite(img, 1,
+           sd->x_resolution * sd->y_resolution * sizeof(char[3]), file);
+    fclose(file);
+	++(*(sd->drawCounter));
+    sd->drawMutex->unlock();
 }
 
 void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter, double view_x0, double view_x1,
                               double view_y0, double view_y1, double x_stepsize, double y_stepsize, int palette_shift,
-                              unsigned char *img, int num_threads, int taskStride)
+                              unsigned char *img, int num_threads, int taskStride, hpx::lcos::local::mutex &drawMutex,
+                              int &drawCounter)
 {
     // Create thread-specific data
     struct static_data staticData;
@@ -100,6 +125,8 @@ void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter, 
     staticData.y_stepsize = y_stepsize;
     staticData.palette_shift = palette_shift;
     staticData.img = (unsigned char *) img;
+    staticData.drawMutex = &drawMutex;
+    staticData.drawCounter = &drawCounter;
     // Initialize tasks
     int maxTasks = y_resolution;
     std::vector<hpx::future<void>> futures;

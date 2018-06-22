@@ -1,6 +1,8 @@
 #ifndef MANDELBROT_MANDELBROT_SET_H
 #define MANDELBROT_MANDELBROT_SET_H
 
+#include "hpx/include/local_lcos.hpp"
+
 void mandelbrot_draw_hpx_coarseConsumer(int x_resolution, int y_resolution, int max_iter,
                                         double view_x0, double view_x1, double view_y0, double view_y1,
                                         double x_stepsize, double y_stepsize,
@@ -9,7 +11,8 @@ void mandelbrot_draw_hpx_coarseConsumer(int x_resolution, int y_resolution, int 
 
 void mandelbrot_draw_hpx_fine(int x_resolution, int y_resolution, int max_iter, double view_x0, double view_x1,
                               double view_y0, double view_y1, double x_stepsize, double y_stepsize, int palette_shift,
-                              unsigned char *img, int num_threads, int taskStride);
+                              unsigned char *img, int num_threads, int taskStride, hpx::lcos::local::mutex &drawMutex,
+                              int &drawCounter);
 
 void mandelbrot_draw_hpx_ultrafine(int x_resolution, int y_resolution, int max_iter, double view_x0, double view_x1,
                               double view_y0, double view_y1, double x_stepsize, double y_stepsize, int palette_shift,

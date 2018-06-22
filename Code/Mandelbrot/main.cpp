@@ -186,6 +186,10 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     
+    // setup mutex and counter for incremental drawing
+    hpx::lcos::local::mutex drawMutex;
+    int drawCounter=0;
+    
     // compute mandelbrot
     clock_gettime(CLOCK_MONOTONIC, &begin);
     for (int trial=0; trial<numTrials; ++trial)
@@ -194,7 +198,8 @@ int main(int argc, char *argv[])
         {
             if (taskGrainSize == FINE)
                 mandelbrot_draw_hpx_fine(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0, view_y1,
-                                         x_stepsize, y_stepsize, palette_shift, (unsigned char *) image, num_threads, taskStride);
+                                         x_stepsize, y_stepsize, palette_shift, (unsigned char *) image, num_threads,
+                                         taskStride, drawMutex, drawCounter);
             else
                 mandelbrot_draw_hpx_coarseConsumer(x_resolution, y_resolution, max_iter, view_x0, view_x1, view_y0,
                                                    view_y1,
